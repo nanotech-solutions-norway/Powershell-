@@ -1,0 +1,27 @@
+{
+  "project": "Atlas AI",
+  "project_key": "atlas",
+  "default_environment": "development",
+  "default_write_mode": "read_only",
+  "base_urls": {
+    "development": "https://www.atlas-ai.no",
+    "staging": "",
+    "production": "https://www.atlas-ai.no"
+  },
+  "health_paths": [
+    "/"
+  ],
+  "required_secrets": [],
+  "optional_secrets": [
+    "ATLAS_API_TOKEN",
+    "ATLAS_HEALTH_BEARER_TOKEN",
+    "WIX_API_TOKEN",
+    "MCP_BEARER_TOKEN",
+    "DOMENESHOP_API_TOKEN"
+  ],
+  "evidence": {
+    "enabled": true,
+    "directory": "evidence",
+    "redact_headers": true
+  }
+}
