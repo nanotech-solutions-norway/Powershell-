@@ -1,0 +1,33 @@
+# PowerShell / local development
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local secrets
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.cer
+secrets/
+private/
+credentials/
+
+# Evidence output
+evidence/*.json
+!evidence/.gitkeep
+
+# Test output
+TestResults/
+coverage/
+*.trx
+*.xml
+
+# OS/editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
