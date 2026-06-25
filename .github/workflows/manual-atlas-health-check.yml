@@ -1,0 +1,55 @@
+name: Manual - Atlas Health Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+      base_url:
+        description: "Atlas base URL"
+        required: true
+        default: "https://www.atlas-ai.no"
+      path:
+        description: "Health path"
+        required: true
+        default: "/"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  atlas-health-check:
+    name: Atlas health check
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Atlas health check
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 `
+            -BaseUrl "${{ inputs.base_url }}" `
+            -Path "${{ inputs.path }}" `
+            -TargetEnvironment "${{ inputs.target_environment }}" `
+            -WriteMode "read_only"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-health-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
