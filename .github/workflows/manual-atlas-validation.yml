@@ -1,0 +1,50 @@
+name: Manual - Atlas Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+      base_url:
+        description: "Optional Atlas base URL for endpoint validation"
+        required: false
+        default: "https://www.atlas-ai.no"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  atlas-validation:
+    name: Atlas validation
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Atlas validation
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          ./scripts/atlas/Invoke-AtlasValidation.ps1 `
+            -TargetEnvironment "${{ inputs.target_environment }}" `
+            -WriteMode "read_only" `
+            -BaseUrl "${{ inputs.base_url }}"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-validation-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
