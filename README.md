@@ -1,1 +1,50 @@
-# Powershell-
+# Atlas AI GitHub PowerShell Blueprint — 22:38, 25.06.2026
+
+This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
+
+Primary operating purpose:
+
+- run controlled PowerShell scripts through **GitHub Actions** rather than Android-local execution;
+- provide a browser-operated execution model suitable for Android, desktop, and tablet use;
+- separate scripts, secrets, workflows, validation, audit logs, and deployment gates;
+- support Atlas AI first, while keeping the pattern adaptable to SolarEX, Conta Bridge/MCP, Domeneshop tooling, website QA, and future platform modules.
+
+## Repository identity
+
+| Item | Value |
+|---|---|
+| GitHub repository | `nanotech-solutions-norway/Powershell-` |
+| Main target project | Atlas AI |
+| Execution model | GitHub Actions + PowerShell 7 (`pwsh`) |
+| Interactive model | GitHub Codespaces where needed |
+| Security posture | Read-first, write-paused by default, environment-gated |
+| Mobile control | Android browser or GitHub app triggers Actions manually |
+
+## Recommended first-run order
+
+1. Add repository secrets and variables in GitHub.
+2. Keep all write/deploy workflows paused until validation is complete.
+3. Run `Manual - Atlas Health Check`.
+4. Run `CI - PowerShell Quality Gate`.
+5. Run `Manual - Atlas Validation`.
+6. Enable staging deployment only after health and validation pass.
+7. Enable production deployment only behind a protected GitHub Environment.
+
+## Documents
+
+| File | Purpose |
+|---|---|
+| `docs/01_blueprint.md` | Architecture and operating model |
+| `docs/02_playbook_atlas_ai.md` | Atlas-specific execution playbook |
+| `docs/03_security_secrets.md` | Secrets, tokens, environment gates, audit model |
+| `docs/04_workflow_catalog.md` | GitHub Actions workflow reference |
+| `docs/05_android_operations.md` | Android/browser operation instructions |
+| `docs/06_adaptation_guide.md` | How to adapt this repo to other projects |
+| `docs/07_evidence_audit.md` | Evidence and audit logging model |
+| `docs/08_troubleshooting.md` | Failure patterns and corrective actions |
+
+## Key principle
+
+GitHub should execute the automation. Android should only control it.
+
+That gives Atlas AI a repeatable, logged, auditable, and credential-safe execution layer.
