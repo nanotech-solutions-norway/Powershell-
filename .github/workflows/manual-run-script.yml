@@ -1,0 +1,91 @@
+name: Manual - Run Approved PowerShell Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      script_name:
+        description: "Approved script to run"
+        required: true
+        type: choice
+        default: Get-AtlasEndpointHealth
+        options:
+          - Get-AtlasEndpointHealth
+          - Invoke-AtlasValidation
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+      runner:
+        description: "Runner"
+        required: true
+        type: choice
+        default: ubuntu-latest
+        options:
+          - ubuntu-latest
+          - windows-latest
+      base_url:
+        description: "Base URL where relevant"
+        required: false
+        default: "https://www.atlas-ai.no"
+      write_mode:
+        description: "Write mode"
+        required: true
+        type: choice
+        default: read_only
+        options:
+          - read_only
+          - write_paused
+          - staging_write_enabled
+          - production_write_enabled
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  run-approved-script:
+    name: Run approved script
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enforce production write policy
+        shell: pwsh
+        run: |
+          if ("${{ inputs.write_mode }}" -eq "production_write_enabled" -and "${{ inputs.target_environment }}" -ne "production") {
+            throw "production_write_enabled requires target_environment=production"
+          }
+
+      - name: Run selected script
+        shell: pwsh
+        env:
+          WRITE_TOOLS_ENABLED: ${{ vars.WRITE_TOOLS_ENABLED }}
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          switch ("${{ inputs.script_name }}") {
+            "Get-AtlasEndpointHealth" {
+              ./scripts/atlas/Get-AtlasEndpointHealth.ps1 -BaseUrl "${{ inputs.base_url }}" -TargetEnvironment "${{ inputs.target_environment }}" -WriteMode "${{ inputs.write_mode }}"
+            }
+            "Invoke-AtlasValidation" {
+              ./scripts/atlas/Invoke-AtlasValidation.ps1 -TargetEnvironment "${{ inputs.target_environment }}" -WriteMode "${{ inputs.write_mode }}" -BaseUrl "${{ inputs.base_url }}"
+            }
+            default {
+              throw "Script is not approved for manual execution."
+            }
+          }
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: approved-script-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
