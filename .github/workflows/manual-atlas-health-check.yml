@@ -20,6 +20,14 @@ on:
         description: "Health path"
         required: true
         default: "/"
+      fail_on_unhealthy:
+        description: "Fail the workflow if endpoint is not healthy"
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: read
@@ -34,17 +42,27 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
 
       - name: Run Atlas health check
         shell: pwsh
         env:
           ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
         run: |
-          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 `
-            -BaseUrl "${{ inputs.base_url }}" `
-            -Path "${{ inputs.path }}" `
-            -TargetEnvironment "${{ inputs.target_environment }}" `
-            -WriteMode "read_only"
+          $arguments = @(
+            "-BaseUrl", "${{ inputs.base_url }}",
+            "-Path", "${{ inputs.path }}",
+            "-TargetEnvironment", "${{ inputs.target_environment }}",
+            "-WriteMode", "read_only"
+          )
+
+          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
+            $arguments += "-FailOnUnhealthy"
+          }
+
+          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 @arguments
 
       - name: Upload evidence
         if: always()
