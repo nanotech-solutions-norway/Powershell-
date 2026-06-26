@@ -45,6 +45,15 @@ Describe "Atlas AI PowerShell repository baseline" {
             $content | Should -Not -Match '\$repoRoot/common/'
         }
     }
+
+    It "does not use positional array splatting for workflow PowerShell arguments" {
+        $workflowFiles = Get-ChildItem (Join-Path $RepoRoot ".github/workflows") -Filter "*.yml"
+        foreach ($workflow in $workflowFiles) {
+            $content = Get-Content -Path $workflow.FullName -Raw
+            $content | Should -Not -Match '\$arguments\s*=\s*@\('
+            $content | Should -Not -Match '@arguments'
+        }
+    }
 }
 
 Describe "Atlas AI write gate" {
