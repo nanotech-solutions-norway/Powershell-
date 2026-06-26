@@ -36,6 +36,15 @@ Describe "Atlas AI PowerShell repository baseline" {
         Test-Path (Join-Path $RepoRoot "private") | Should -BeFalse
         Test-Path (Join-Path $RepoRoot "credentials") | Should -BeFalse
     }
+
+    It "does not use obsolete common-script path references" {
+        $scripts = Get-ChildItem (Join-Path $RepoRoot "scripts") -Recurse -Filter "*.ps1"
+        foreach ($script in $scripts) {
+            $content = Get-Content -Path $script.FullName -Raw
+            $content | Should -Not -Match '\$root/common/'
+            $content | Should -Not -Match '\$repoRoot/common/'
+        }
+    }
 }
 
 Describe "Atlas AI write gate" {
