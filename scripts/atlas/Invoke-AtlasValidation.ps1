@@ -19,13 +19,23 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
+$writeEvidencePath = Join-Path $repoRoot "scripts/common/Write-EvidenceLog.ps1"
+$healthScriptPath = Join-Path $repoRoot "scripts/atlas/Get-AtlasEndpointHealth.ps1"
+
 $requiredPaths = @(
     "README.md",
     "SECURITY.md",
     "scripts/common/Initialize-AtlasContext.ps1",
     "scripts/common/Write-EvidenceLog.ps1",
+    "scripts/common/Test-WriteGate.ps1",
     "scripts/atlas/Get-AtlasEndpointHealth.ps1",
+    "scripts/atlas/Invoke-AtlasValidation.ps1",
+    "scripts/atlas/Invoke-AtlasDeploymentPreflight.ps1",
     ".github/workflows/manual-atlas-health-check.yml",
+    ".github/workflows/manual-atlas-validation.yml",
+    ".github/workflows/manual-atlas-deployment-preflight.yml",
+    ".github/workflows/manual-run-script.yml",
+    ".github/workflows/scheduled-atlas-health.yml",
     ".github/workflows/ci-powershell-quality.yml"
 )
 
@@ -49,14 +59,22 @@ $evidence = @{
     manual_review_required = ($missing.Count -gt 0)
 }
 
-& "$repoRoot/scripts/common/Write-EvidenceLog.ps1" -Evidence $evidence -Prefix "atlas-validation"
+if (-not (Test-Path $writeEvidencePath)) {
+    throw "Required script not found: $writeEvidencePath"
+}
+
+& $writeEvidencePath -Evidence $evidence -Prefix "atlas-validation"
 
 if ($missing.Count -gt 0) {
     Write-Error "Validation failed. Missing paths: $($missing -join ', ')"
 }
 
 if (-not [string]::IsNullOrWhiteSpace($BaseUrl)) {
-    & "$repoRoot/scripts/atlas/Get-AtlasEndpointHealth.ps1" -BaseUrl $BaseUrl -TargetEnvironment $TargetEnvironment -WriteMode "read_only"
+    if (-not (Test-Path $healthScriptPath)) {
+        throw "Required script not found: $healthScriptPath"
+    }
+
+    & $healthScriptPath -BaseUrl $BaseUrl -TargetEnvironment $TargetEnvironment -WriteMode "read_only"
 }
 
 Write-Host "Atlas validation completed: $classification"
