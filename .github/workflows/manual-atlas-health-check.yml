@@ -13,13 +13,21 @@ on:
           - staging
           - production
       base_url:
-        description: "Atlas base URL"
+        description: "Atlas base URL or domain"
         required: true
         default: "https://www.atlas-ai.no"
       path:
-        description: "Health path"
+        description: "HTTP health path; ignored for DNS mode"
         required: true
         default: "/"
+      check_mode:
+        description: "Health check mode"
+        required: true
+        type: choice
+        default: dns
+        options:
+          - dns
+          - http
       fail_on_unhealthy:
         description: "Fail the workflow if endpoint is not healthy"
         required: true
@@ -51,18 +59,19 @@ jobs:
         env:
           ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
         run: |
-          $arguments = @(
-            "-BaseUrl", "${{ inputs.base_url }}",
-            "-Path", "${{ inputs.path }}",
-            "-TargetEnvironment", "${{ inputs.target_environment }}",
-            "-WriteMode", "read_only"
-          )
-
-          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
-            $arguments += "-FailOnUnhealthy"
+          $params = @{
+            BaseUrl = "${{ inputs.base_url }}"
+            Path = "${{ inputs.path }}"
+            CheckMode = "${{ inputs.check_mode }}"
+            TargetEnvironment = "${{ inputs.target_environment }}"
+            WriteMode = "read_only"
           }
 
-          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 @arguments
+          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
+            $params.FailOnUnhealthy = $true
+          }
+
+          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 @params
 
       - name: Upload evidence
         if: always()
