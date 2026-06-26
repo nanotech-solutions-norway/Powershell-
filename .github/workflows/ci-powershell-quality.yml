@@ -18,28 +18,72 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Verify repository structure
+        shell: pwsh
+        run: |
+          Write-Host "Repository: $env:GITHUB_REPOSITORY"
+          Write-Host "Workflow: $env:GITHUB_WORKFLOW"
+          Write-Host "Event SHA: $env:GITHUB_SHA"
+          Write-Host "Checked-out HEAD: $(git rev-parse HEAD)"
+          Write-Host "Repository root contents:"
+          Get-ChildItem -Force | Select-Object Mode,Length,Name | Format-Table -AutoSize
+
+          if (-not (Test-Path ./scripts)) {
+            throw "Required directory './scripts' is missing from checked-out main. Start a NEW workflow_dispatch run from Actions; do not rerun an old failed commit."
+          }
+
+          if (-not (Test-Path ./tests)) {
+            throw "Required directory './tests' is missing from checked-out main. Start a NEW workflow_dispatch run from Actions; do not rerun an old failed commit."
+          }
+
+          $scriptFiles = Get-ChildItem ./scripts -Recurse -Filter *.ps1
+          if (-not $scriptFiles) {
+            throw "No PowerShell scripts were found under './scripts'."
+          }
+
+          Write-Host "PowerShell scripts found: $($scriptFiles.Count)"
+          $scriptFiles | Select-Object FullName | Format-Table -AutoSize
 
       - name: Install PowerShell modules
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
-          Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          }
+          if (-not (Get-Module -ListAvailable -Name Pester)) {
+            Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          }
+          Import-Module PSScriptAnalyzer
+          Import-Module Pester
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Severity Error,Warning
-          $results | Format-Table -AutoSize
-          if ($results | Where-Object { $_.Severity -eq "Error" }) {
+          if ($results) {
+            $results | Format-Table -AutoSize
+          }
+          else {
+            Write-Host "PSScriptAnalyzer returned no findings."
+          }
+
+          $errors = $results | Where-Object { $_.Severity -eq "Error" }
+          if ($errors) {
             throw "PSScriptAnalyzer found errors."
           }
 
       - name: Run Pester tests
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Path TestResults -Force | Out-Null
           $config = New-PesterConfiguration
           $config.Run.Path = "./tests"
+          $config.Run.Exit = $true
           $config.Output.Verbosity = "Detailed"
           $config.TestResult.Enabled = $true
           $config.TestResult.OutputPath = "TestResults/pester-results.xml"
