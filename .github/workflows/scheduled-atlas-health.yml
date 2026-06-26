@@ -1,0 +1,58 @@
+name: Scheduled - Atlas Health Evidence
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Atlas base URL"
+        required: true
+        default: "https://www.atlas-ai.no"
+      path:
+        description: "Health path"
+        required: true
+        default: "/"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scheduled-health:
+    name: Scheduled Atlas health evidence
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Resolve inputs
+        id: inputs
+        shell: bash
+        run: |
+          echo "base_url=${{ inputs.base_url || 'https://www.atlas-ai.no' }}" >> "$GITHUB_OUTPUT"
+          echo "path=${{ inputs.path || '/' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run scheduled Atlas health check
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          ./scripts/atlas/Get-AtlasEndpointHealth.ps1 `
+            -BaseUrl "${{ steps.inputs.outputs.base_url }}" `
+            -Path "${{ steps.inputs.outputs.path }}" `
+            -TargetEnvironment "development" `
+            -WriteMode "read_only"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-atlas-health-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
