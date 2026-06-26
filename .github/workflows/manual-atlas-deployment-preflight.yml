@@ -1,0 +1,64 @@
+name: Manual - Atlas Deployment Preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+      base_url:
+        description: "Atlas base URL"
+        required: true
+        default: "https://www.atlas-ai.no"
+      write_mode:
+        description: "Write mode for gate evaluation"
+        required: true
+        type: choice
+        default: read_only
+        options:
+          - read_only
+          - write_paused
+          - staging_write_enabled
+          - production_write_enabled
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deployment-preflight:
+    name: Atlas deployment preflight
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run Atlas deployment preflight
+        shell: pwsh
+        env:
+          WRITE_TOOLS_ENABLED: ${{ vars.WRITE_TOOLS_ENABLED }}
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          ./scripts/atlas/Invoke-AtlasDeploymentPreflight.ps1 `
+            -TargetEnvironment "${{ inputs.target_environment }}" `
+            -WriteMode "${{ inputs.write_mode }}" `
+            -BaseUrl "${{ inputs.base_url }}"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-deployment-preflight-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
