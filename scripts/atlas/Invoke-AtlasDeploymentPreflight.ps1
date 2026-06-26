@@ -2,7 +2,7 @@
 .SYNOPSIS
 Runs Atlas AI deployment preflight checks without performing deployment writes.
 .DESCRIPTION
-This script validates repository structure, write gate status, target URL health, and basic runtime context before any staging or production deployment workflow is allowed to proceed.
+This script validates repository structure, write gate status, and runtime context before any staging or production deployment workflow is allowed to proceed.
 #>
 param(
     [Parameter(Mandatory = $false)]
@@ -21,8 +21,18 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
-$context = & "$repoRoot/scripts/common/Initialize-AtlasContext.ps1" -Project "Atlas AI" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
-$writeGate = & "$repoRoot/scripts/common/Test-WriteGate.ps1" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
+$initializeContextPath = Join-Path $repoRoot "scripts/common/Initialize-AtlasContext.ps1"
+$writeEvidencePath = Join-Path $repoRoot "scripts/common/Write-EvidenceLog.ps1"
+$writeGatePath = Join-Path $repoRoot "scripts/common/Test-WriteGate.ps1"
+
+foreach ($requiredScript in @($initializeContextPath, $writeEvidencePath, $writeGatePath)) {
+    if (-not (Test-Path $requiredScript)) {
+        throw "Required script not found: $requiredScript"
+    }
+}
+
+$context = & $initializeContextPath -Project "Atlas AI" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
+$writeGate = & $writeGatePath -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
 
 $requiredPaths = @(
     "README.md",
@@ -37,7 +47,9 @@ $requiredPaths = @(
     ".github/workflows/ci-powershell-quality.yml",
     ".github/workflows/manual-atlas-health-check.yml",
     ".github/workflows/manual-atlas-validation.yml",
-    ".github/workflows/manual-run-script.yml"
+    ".github/workflows/manual-atlas-deployment-preflight.yml",
+    ".github/workflows/manual-run-script.yml",
+    ".github/workflows/scheduled-atlas-health.yml"
 )
 
 $missing = @()
@@ -80,7 +92,7 @@ $evidence = @{
     error_summary = $errorSummary
 }
 
-& "$repoRoot/scripts/common/Write-EvidenceLog.ps1" -Evidence $evidence -Prefix "atlas-deployment-preflight"
+& $writeEvidencePath -Evidence $evidence -Prefix "atlas-deployment-preflight"
 
 if ($classification -ne "preflight_passed") {
     Write-Warning "Atlas deployment preflight classification: $classification"
