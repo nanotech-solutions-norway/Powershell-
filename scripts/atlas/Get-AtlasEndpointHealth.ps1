@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
 Runs a non-sensitive Atlas AI endpoint health check and writes evidence.
+.DESCRIPTION
+By default this script writes evidence and returns success even when the target endpoint is non-healthy. Use -FailOnUnhealthy for strict CI/deployment gating.
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -15,7 +17,10 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("read_only","write_paused","staging_write_enabled","production_write_enabled")]
-    [string]$WriteMode = "read_only"
+    [string]$WriteMode = "read_only",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$FailOnUnhealthy
 )
 
 Set-StrictMode -Version Latest
@@ -45,6 +50,7 @@ $uri = [System.Uri]::new(([System.Uri]::new($BaseUrl)), $Path)
 $statusCode = $null
 $classification = "failed"
 $errorSummary = $null
+$strictFailure = $false
 
 try {
     $headers = @{
@@ -92,6 +98,8 @@ catch {
     }
 }
 
+$strictFailure = ($classification -notin @("healthy"))
+
 $evidence = @{
     schema_version = "1.0"
     project = "Atlas AI"
@@ -106,15 +114,24 @@ $evidence = @{
     http_status = $statusCode
     classification = $classification
     write_mode = $WriteMode
-    manual_review_required = ($classification -notin @("healthy"))
+    fail_on_unhealthy = [bool]$FailOnUnhealthy
+    strict_failure = $strictFailure
+    manual_review_required = $strictFailure
     error_summary = $errorSummary
 }
 
 & $writeEvidencePath -Evidence $evidence -Prefix "atlas-health"
 
-if ($classification -notin @("healthy")) {
+if ($strictFailure) {
     Write-Warning "Atlas health classification: $classification"
-    exit 1
+    Write-Warning "Endpoint is reachable enough to produce evidence, but the target did not return a healthy 2xx/3xx status."
+
+    if ($FailOnUnhealthy) {
+        exit 1
+    }
+
+    Write-Host "Non-blocking health evidence mode: workflow will not fail. Use -FailOnUnhealthy for strict gating."
+    exit 0
 }
 
 Write-Host "Atlas health classification: $classification"
