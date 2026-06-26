@@ -11,6 +11,7 @@ on:
         options:
           - Get-AtlasEndpointHealth
           - Invoke-AtlasValidation
+          - Invoke-AtlasDeploymentPreflight
       target_environment:
         description: "Target environment"
         required: true
@@ -56,6 +57,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
 
       - name: Enforce production write policy
         shell: pwsh
@@ -76,6 +80,9 @@ jobs:
             }
             "Invoke-AtlasValidation" {
               ./scripts/atlas/Invoke-AtlasValidation.ps1 -TargetEnvironment "${{ inputs.target_environment }}" -WriteMode "${{ inputs.write_mode }}" -BaseUrl "${{ inputs.base_url }}"
+            }
+            "Invoke-AtlasDeploymentPreflight" {
+              ./scripts/atlas/Invoke-AtlasDeploymentPreflight.ps1 -TargetEnvironment "${{ inputs.target_environment }}" -WriteMode "${{ inputs.write_mode }}" -BaseUrl "${{ inputs.base_url }}"
             }
             default {
               throw "Script is not approved for manual execution."
