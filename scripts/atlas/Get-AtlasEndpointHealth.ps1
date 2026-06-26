@@ -21,8 +21,20 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$context = & "$root/common/Initialize-AtlasContext.ps1" -Project "Atlas AI" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
+$commonDir = Join-Path $repoRoot "scripts/common"
+$initializeContextPath = Join-Path $commonDir "Initialize-AtlasContext.ps1"
+$writeEvidencePath = Join-Path $commonDir "Write-EvidenceLog.ps1"
+
+if (-not (Test-Path $initializeContextPath)) {
+    throw "Required script not found: $initializeContextPath"
+}
+
+if (-not (Test-Path $writeEvidencePath)) {
+    throw "Required script not found: $writeEvidencePath"
+}
+
+$context = & $initializeContextPath -Project "Atlas AI" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
 
 if ($WriteMode -ne "read_only") {
     Write-Host "Health check is read-only. Requested write mode '$WriteMode' will not perform writes."
@@ -35,15 +47,18 @@ $classification = "failed"
 $errorSummary = $null
 
 try {
-    $headers = @{}
+    $headers = @{
+        "User-Agent" = "AtlasAI-GitHub-PowerShell-HealthCheck/1.0"
+    }
+
     if (-not [string]::IsNullOrWhiteSpace($env:ATLAS_HEALTH_BEARER_TOKEN)) {
         $headers["Authorization"] = "Bearer $($env:ATLAS_HEALTH_BEARER_TOKEN)"
     }
 
-    $response = Invoke-WebRequest -Uri $uri.AbsoluteUri -Method GET -Headers $headers -TimeoutSec 30 -UseBasicParsing
+    $response = Invoke-WebRequest -Uri $uri.AbsoluteUri -Method GET -Headers $headers -TimeoutSec 30 -UseBasicParsing -MaximumRedirection 5
     $statusCode = [int]$response.StatusCode
 
-    if ($statusCode -ge 200 -and $statusCode -lt 300) {
+    if ($statusCode -ge 200 -and $statusCode -lt 400) {
         $classification = "healthy"
     }
     elseif ($statusCode -eq 401 -or $statusCode -eq 403) {
@@ -58,10 +73,18 @@ try {
 }
 catch {
     $errorSummary = $_.Exception.Message
-    if ($errorSummary -match "401|403") {
+
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+        $statusCode = [int]$_.Exception.Response.StatusCode
+    }
+
+    if ($statusCode -ge 200 -and $statusCode -lt 400) {
+        $classification = "healthy"
+    }
+    elseif ($statusCode -eq 401 -or $statusCode -eq 403) {
         $classification = "unauthorized"
     }
-    elseif ($errorSummary -match "404") {
+    elseif ($statusCode -eq 404) {
         $classification = "not_found"
     }
     else {
@@ -79,6 +102,7 @@ $evidence = @{
     script = "Get-AtlasEndpointHealth.ps1"
     base_url = $BaseUrl
     path = $Path
+    resolved_url = $uri.AbsoluteUri
     http_status = $statusCode
     classification = $classification
     write_mode = $WriteMode
@@ -86,7 +110,7 @@ $evidence = @{
     error_summary = $errorSummary
 }
 
-& "$root/common/Write-EvidenceLog.ps1" -Evidence $evidence -Prefix "atlas-health"
+& $writeEvidencePath -Evidence $evidence -Prefix "atlas-health"
 
 if ($classification -notin @("healthy")) {
     Write-Warning "Atlas health classification: $classification"
