@@ -1,0 +1,57 @@
+name: Manual - Project Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Project adapter"
+        required: true
+        type: choice
+        default: atlas
+        options:
+          - atlas
+          - solarex
+          - domeneshop
+          - conta
+          - wix
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-diagnostics:
+    name: Project diagnostics
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run project diagnostics
+        shell: pwsh
+        run: |
+          ./scripts/projects/Invoke-ProjectDiagnostics.ps1 `
+            -Project "${{ inputs.project }}" `
+            -TargetEnvironment "${{ inputs.target_environment }}"
+
+      - name: Upload diagnostics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-diagnostics-evidence-${{ inputs.project }}
+          path: evidence/*.json
+          if-no-files-found: warn
