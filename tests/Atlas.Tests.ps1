@@ -21,6 +21,10 @@ Describe "Atlas AI PowerShell repository baseline" {
         Test-Path (Join-Path $RepoRoot "scripts/atlas/Invoke-AtlasDeploymentPreflight.ps1") | Should -BeTrue
     }
 
+    It "has required project adapter scripts" {
+        Test-Path (Join-Path $RepoRoot "scripts/projects/Invoke-ProjectHealthCheck.ps1") | Should -BeTrue
+    }
+
     It "has required GitHub workflows" {
         Test-Path (Join-Path $RepoRoot ".github/workflows/ci-powershell-quality.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-atlas-health-check.yml") | Should -BeTrue
@@ -28,6 +32,7 @@ Describe "Atlas AI PowerShell repository baseline" {
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-atlas-deployment-preflight.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/scheduled-atlas-health.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-run-script.yml") | Should -BeTrue
+        Test-Path (Join-Path $RepoRoot ".github/workflows/manual-project-health-check.yml") | Should -BeTrue
     }
 
     It "does not contain obvious secret files" {
@@ -67,5 +72,14 @@ Describe "Atlas AI write gate" {
         $result = & (Join-Path $RepoRoot "scripts/common/Test-WriteGate.ps1") -TargetEnvironment "staging" -WriteMode "staging_write_enabled" -WriteToolsEnabled "true"
         $result.WritesAllowed | Should -BeTrue
         $result.Classification | Should -Be "staging_write_allowed"
+    }
+}
+
+Describe "Project adapter router" {
+    It "contains supported project adapters" {
+        $content = Get-Content -Path (Join-Path $RepoRoot "scripts/projects/Invoke-ProjectHealthCheck.ps1") -Raw
+        foreach ($project in @("atlas","solarex","domeneshop","conta","wix")) {
+            $content | Should -Match $project
+        }
     }
 }
