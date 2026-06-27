@@ -1,4 +1,4 @@
-# Atlas AI GitHub PowerShell Blueprint — 03:24, 26.06.2026
+# Atlas AI GitHub PowerShell Blueprint — 26.06.2026
 
 This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
 
@@ -28,17 +28,19 @@ Primary operating purpose:
 4. Run `Manual - Atlas Health Check`.
 5. Run `Manual - Atlas Validation`.
 6. Run `Manual - Atlas Deployment Preflight`.
-7. Enable staging deployment only after health, validation, and preflight pass.
-8. Enable production deployment only behind a protected GitHub Environment.
+7. Run `Manual - Project Health Check` for each project adapter.
+8. Enable staging deployment only after health, validation, and preflight pass.
+9. Enable production deployment only behind a protected GitHub Environment.
 
 ## Workflows
 
 | Workflow | Purpose |
 |---|---|
 | `CI - PowerShell Quality Gate` | PSScriptAnalyzer + Pester baseline |
-| `Manual - Atlas Health Check` | Manual endpoint health check |
+| `Manual - Atlas Health Check` | Manual Atlas DNS/HTTP health check |
 | `Manual - Atlas Validation` | Repository and endpoint validation |
 | `Manual - Atlas Deployment Preflight` | Deployment-readiness gate without writes |
+| `Manual - Project Health Check` | Project adapter health check for Atlas, SolarEX, Domeneshop, Conta, Wix |
 | `Manual - Run Approved PowerShell Script` | Controlled manual script execution |
 | `Scheduled - Atlas Health Evidence` | Daily scheduled health evidence |
 
@@ -55,6 +57,7 @@ Primary operating purpose:
 | `docs/07_evidence_audit.md` | Evidence and audit logging model |
 | `docs/08_troubleshooting.md` | Failure patterns and corrective actions |
 | `docs/09_phase2_operations.md` | Phase 2 hardening and next operating steps |
+| `docs/10_phase3_project_adapters.md` | Project adapter model and default health targets |
 
 ## Write gate
 
