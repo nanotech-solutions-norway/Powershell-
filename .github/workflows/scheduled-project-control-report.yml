@@ -1,0 +1,78 @@
+name: Scheduled - Project Control Report
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-control-report:
+    name: Scheduled project control report
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run operations evidence pass
+        shell: pwsh
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          foreach ($project in $projects) {
+            ./scripts/projects/Invoke-ProjectHealthCheck.ps1 -Project $project -TargetEnvironment "development"
+            ./scripts/projects/Invoke-ProjectDiagnostics.ps1 -Project $project -TargetEnvironment "development"
+          }
+
+      - name: Create operations report
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectOperationsReport.ps1 `
+            -EvidenceDirectory "evidence" `
+            -OutputDirectory "operations-report" `
+            -Prefix "scheduled-project-operations-report"
+
+      - name: Run workflow write posture audit
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/governance/Test-WorkflowWritePosture.ps1 `
+            -WorkflowDirectory ".github/workflows" `
+            -OutputDirectory "governance-report"
+
+      - name: Create control report
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectControlReport.ps1 `
+            -OperationsReportDirectory "operations-report" `
+            -GovernanceReportDirectory "governance-report" `
+            -OutputDirectory "control-report" `
+            -Prefix "scheduled-project-control-report"
+
+      - name: Upload scheduled control evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-control-raw-evidence
+          path: |
+            evidence/*.json
+            operations-report/*
+            governance-report/*
+          if-no-files-found: warn
+
+      - name: Upload scheduled control report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-control-report
+          path: control-report/*
+          if-no-files-found: warn
