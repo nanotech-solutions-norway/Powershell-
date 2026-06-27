@@ -1,0 +1,4 @@
+# Development and validation dependencies for the Python control-plane layer.
+pytest>=8.4,<9
+ruff>=0.12,<1
+mypy>=2.1,<3
