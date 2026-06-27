@@ -28,12 +28,17 @@ def build_payload() -> dict[str, str]:
 
 
 def main() -> int:
-    output_dir = Path(os.environ.get("PYTHON_CONTROL_PLANE_OUTPUT_DIR", "artifacts/python-run"))
+    output_dir = Path(
+        os.environ.get("PYTHON_CONTROL_PLANE_OUTPUT_DIR", "artifacts/python-run")
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     payload = build_payload()
     output_path = output_dir / "hello-control-plane-output.json"
-    output_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    output_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
     print("hello_control_plane completed in development mode.")
     return 0
