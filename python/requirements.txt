@@ -1,2 +1,0 @@
-# Runtime dependencies for approved Python control-plane scripts.
-# Foundation phase intentionally uses Python standard library only.
