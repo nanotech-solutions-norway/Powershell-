@@ -1,0 +1,66 @@
+name: Manual - Project Diagnostics Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-diagnostics-suite:
+    name: Project diagnostics suite
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run diagnostics for all project adapters
+        shell: pwsh
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          foreach ($project in $projects) {
+            Write-Host "Project diagnostics: $project"
+            ./scripts/projects/Invoke-ProjectDiagnostics.ps1 `
+              -Project $project `
+              -TargetEnvironment "${{ inputs.target_environment }}"
+          }
+
+      - name: Summarize diagnostics evidence
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectDiagnosticsSummary.ps1 `
+            -EvidenceDirectory "evidence" `
+            -OutputDirectory "diagnostics-summary"
+
+      - name: Upload diagnostics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-diagnostics-suite-raw-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
+
+      - name: Upload diagnostics summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-diagnostics-suite-summary
+          path: diagnostics-summary/*
+          if-no-files-found: warn
