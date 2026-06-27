@@ -1,0 +1,38 @@
+name: Scheduled - Workflow Governance Audit
+
+on:
+  schedule:
+    - cron: "07 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  workflow-governance-audit:
+    name: Scheduled workflow governance audit
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run workflow governance audit
+        shell: pwsh
+        run: |
+          ./scripts/governance/Test-WorkflowWritePosture.ps1 `
+            -WorkflowDirectory ".github/workflows" `
+            -OutputDirectory "governance-report"
+
+      - name: Upload governance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-workflow-governance-report
+          path: governance-report/*
+          if-no-files-found: warn
