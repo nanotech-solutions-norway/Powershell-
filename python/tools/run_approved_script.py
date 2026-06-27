@@ -43,7 +43,10 @@ def parse_args() -> argparse.Namespace:
 def write_summary(output_dir: Path, payload: dict[str, Any]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_path = output_dir / "approved-script-run-summary.json"
-    summary_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
 
 def main() -> int:
@@ -72,7 +75,8 @@ def main() -> int:
             runpy.run_path(str(script_path), run_name="__main__")
         except SystemExit as exc:
             if exc.code not in (0, None):
-                raise RuntimeError(f"Approved script exited with status {exc.code}.") from exc
+                message = f"Approved script exited with status {exc.code}."
+                raise RuntimeError(message) from exc
 
         payload["status"] = "success"
         payload["completed_at_utc"] = _utc_now()
