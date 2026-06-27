@@ -1,0 +1,59 @@
+name: Scheduled - Project Diagnostics Suite
+
+on:
+  schedule:
+    - cron: "47 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-diagnostics-suite:
+    name: Scheduled project diagnostics suite
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run diagnostics for all project adapters
+        shell: pwsh
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          foreach ($project in $projects) {
+            Write-Host "Project diagnostics: $project"
+            ./scripts/projects/Invoke-ProjectDiagnostics.ps1 `
+              -Project $project `
+              -TargetEnvironment "development"
+          }
+
+      - name: Summarize diagnostics evidence
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectDiagnosticsSummary.ps1 `
+            -EvidenceDirectory "evidence" `
+            -OutputDirectory "diagnostics-summary" `
+            -Prefix "scheduled-project-diagnostics-summary"
+
+      - name: Upload diagnostics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-diagnostics-suite-raw-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
+
+      - name: Upload diagnostics summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-diagnostics-suite-summary
+          path: diagnostics-summary/*
+          if-no-files-found: warn
