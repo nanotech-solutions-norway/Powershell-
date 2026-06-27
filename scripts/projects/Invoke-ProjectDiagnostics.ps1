@@ -1,7 +1,3 @@
-<#
-.SYNOPSIS
-Runs read-only DNS and HTTP diagnostics for supported project adapters.
-#>
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("atlas","solarex","domeneshop","conta","wix")]
@@ -14,6 +10,27 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+function Resolve-ProjectUri {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUrl,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = "/"
+    )
+
+    $normalizedBaseUrl = $BaseUrl
+    if ($normalizedBaseUrl -notmatch '^https?://') {
+        $normalizedBaseUrl = "https://$normalizedBaseUrl"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or $Path -eq "/") {
+        return [System.Uri]::new($normalizedBaseUrl)
+    }
+
+    return [System.Uri]::new(([System.Uri]::new($normalizedBaseUrl)), $Path)
+}
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
 $writeEvidencePath = Join-Path $repoRoot "scripts/common/Write-EvidenceLog.ps1"
@@ -31,7 +48,7 @@ $defaults = @{
 }
 
 $selected = $defaults[$Project]
-$uri = [System.Uri]::new(([System.Uri]::new($selected.BaseUrl)), $selected.Path)
+$uri = Resolve-ProjectUri -BaseUrl $selected.BaseUrl -Path $selected.Path
 $addresses = @()
 $dnsClassification = "failed"
 $httpStatus = $null
@@ -95,7 +112,7 @@ catch {
 }
 
 $evidence = @{
-    schema_version = "1.0"
+    schema_version = "1.1"
     project = $Project
     target_environment = $TargetEnvironment
     script = "Invoke-ProjectDiagnostics.ps1"
