@@ -39,11 +39,13 @@ def resolve_approved_script(script_name: str, repo_root: Path | None = None) -> 
     """
 
     if not script_name or any(token in script_name for token in ("/", "\\", "..")):
-        raise ApprovedScriptError("Unsafe script name. Use an approved registry key only.")
+        message = "Unsafe script name. Use an approved registry key only."
+        raise ApprovedScriptError(message)
 
     if script_name not in APPROVED_SCRIPTS:
         approved = ", ".join(list_approved_scripts())
-        raise ApprovedScriptError(f"Script is not approved. Approved scripts: {approved}")
+        message = f"Script is not approved. Approved scripts: {approved}"
+        raise ApprovedScriptError(message)
 
     root = (repo_root or Path.cwd()).resolve()
     scripts_dir = (root / "python" / "scripts").resolve()
@@ -52,7 +54,8 @@ def resolve_approved_script(script_name: str, repo_root: Path | None = None) -> 
     try:
         script_path.relative_to(scripts_dir)
     except ValueError as exc:
-        raise ApprovedScriptError("Approved script path escaped python/scripts.") from exc
+        message = "Approved script path escaped python/scripts."
+        raise ApprovedScriptError(message) from exc
 
     if not script_path.is_file():
         raise ApprovedScriptError(f"Approved script file is missing: {script_path}")
