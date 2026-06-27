@@ -1,0 +1,88 @@
+name: Manual - Project Health Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_on_unhealthy:
+        description: "Fail the workflow if any project is unhealthy"
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-health-suite:
+    name: Project health suite with summary
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run all project health adapters
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          $strict = "${{ inputs.fail_on_unhealthy }}" -eq "true"
+          $failed = @()
+
+          foreach ($project in $projects) {
+            Write-Host "--- Project health: $project ---"
+            $params = @{
+              Project = $project
+              TargetEnvironment = "development"
+            }
+            if ($strict) {
+              $params.FailOnUnhealthy = $true
+            }
+
+            try {
+              ./scripts/projects/Invoke-ProjectHealthCheck.ps1 @params
+            }
+            catch {
+              $failed += $project
+              Write-Warning "Project health check threw an exception for $project: $($_.Exception.Message)"
+              if ($strict) {
+                throw
+              }
+            }
+          }
+
+          if ($failed.Count -gt 0) {
+            Write-Warning "Project checks with exceptions: $($failed -join ', ')"
+          }
+
+      - name: Summarize project health evidence
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectHealthEvidenceSummary.ps1 `
+            -EvidenceDirectory "evidence" `
+            -OutputDirectory "evidence-summary"
+
+      - name: Upload raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-health-suite-raw-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
+
+      - name: Upload evidence summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-health-suite-summary
+          path: evidence-summary/*
+          if-no-files-found: warn
