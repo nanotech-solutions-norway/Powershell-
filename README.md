@@ -29,8 +29,9 @@ Primary operating purpose:
 5. Run `Manual - Atlas Validation`.
 6. Run `Manual - Atlas Deployment Preflight`.
 7. Run `Manual - Project Health Check` for each project adapter.
-8. Enable staging deployment only after health, validation, and preflight pass.
-9. Enable production deployment only behind a protected GitHub Environment.
+8. Run `Scheduled - Project Health Matrix` manually once.
+9. Enable staging deployment only after health, validation, and preflight pass.
+10. Enable production deployment only behind a protected GitHub Environment.
 
 ## Workflows
 
@@ -41,6 +42,7 @@ Primary operating purpose:
 | `Manual - Atlas Validation` | Repository and endpoint validation |
 | `Manual - Atlas Deployment Preflight` | Deployment-readiness gate without writes |
 | `Manual - Project Health Check` | Project adapter health check for Atlas, SolarEX, Domeneshop, Conta, Wix |
+| `Scheduled - Project Health Matrix` | Scheduled matrix health evidence for all project adapters |
 | `Manual - Run Approved PowerShell Script` | Controlled manual script execution |
 | `Scheduled - Atlas Health Evidence` | Daily scheduled health evidence |
 
@@ -58,6 +60,7 @@ Primary operating purpose:
 | `docs/08_troubleshooting.md` | Failure patterns and corrective actions |
 | `docs/09_phase2_operations.md` | Phase 2 hardening and next operating steps |
 | `docs/10_phase3_project_adapters.md` | Project adapter model and default health targets |
+| `docs/11_phase4_scheduled_project_health.md` | Scheduled project health matrix note |
 
 ## Write gate
 
