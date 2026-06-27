@@ -1,0 +1,34 @@
+name: Manual - Control Plane Readiness
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  control-plane-readiness:
+    name: Control plane readiness
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run readiness check
+        shell: pwsh
+        run: |
+          ./scripts/governance/Test-ControlPlaneReleaseReadiness.ps1 -RepoRoot "." -OutputDirectory "readiness-report"
+
+      - name: Upload readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: control-plane-readiness-report
+          path: readiness-report/*
+          if-no-files-found: warn
