@@ -1,0 +1,50 @@
+name: Manual - Workflow Governance Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_on_finding:
+        description: "Fail on high or critical findings"
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  workflow-governance-audit:
+    name: Workflow governance audit
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run workflow governance audit
+        shell: pwsh
+        run: |
+          $params = @{
+            WorkflowDirectory = ".github/workflows"
+            OutputDirectory = "governance-report"
+          }
+          if ("${{ inputs.fail_on_finding }}" -eq "true") {
+            $params.FailOnFinding = $true
+          }
+          ./scripts/governance/Test-WorkflowGovernance.ps1 @params
+
+      - name: Upload governance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-governance-report
+          path: governance-report/*
+          if-no-files-found: warn
