@@ -1,0 +1,59 @@
+name: Scheduled - Project Operations Report
+
+on:
+  schedule:
+    - cron: "57 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-operations-report:
+    name: Scheduled project operations report
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run health and diagnostics for all adapters
+        shell: pwsh
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          foreach ($project in $projects) {
+            Write-Host "Project health: $project"
+            ./scripts/projects/Invoke-ProjectHealthCheck.ps1 -Project $project -TargetEnvironment "development"
+            Write-Host "Project diagnostics: $project"
+            ./scripts/projects/Invoke-ProjectDiagnostics.ps1 -Project $project -TargetEnvironment "development"
+          }
+
+      - name: Create operations report
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectOperationsReport.ps1 `
+            -EvidenceDirectory "evidence" `
+            -OutputDirectory "operations-report" `
+            -Prefix "scheduled-project-operations-report"
+
+      - name: Upload operations evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-operations-raw-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
+
+      - name: Upload operations report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-operations-report
+          path: operations-report/*
+          if-no-files-found: warn
