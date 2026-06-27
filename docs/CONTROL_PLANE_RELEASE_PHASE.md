@@ -1,15 +1,15 @@
-# PowerShell Control Plane Release Phase — 15:20, 27.06.2026
+# PowerShell Control Plane Release Phase — 15:30, 27.06.2026
 
 Repository: `nanotech-solutions-norway/Powershell-`
 
-Release status: Phase 6 release closure documented; post-patch validation required.
+Release status: Phase 6 release closure validated.
 
 ## Validated baseline
 
 The current baseline has validated:
 
 - `CI - PowerShell Quality Gate`
-- `Manual - Project Health Suite`
+- `Manual - Control Plane Readiness`
 - `Manual - Workflow Governance Audit`
 - `Manual - Project Control Report`
 - `Scheduled - Project Control Report`
@@ -49,9 +49,19 @@ Known Phase 5 commits:
 | `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290102760/attempts/1#summary-83820537105 |
 | `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290136335/attempts/1#summary-83820622527 |
 
+## Final validated Phase 6 workflow chain
+
+| Workflow | Status | Evidence |
+|---|---|---|
+| `CI - PowerShell Quality Gate` | Working | User-validated Phase 6 baseline |
+| `Manual - Control Plane Readiness` | Working | User-validated Phase 6 baseline |
+| `Manual - Workflow Governance Audit` | Working | User-validated Phase 6 baseline |
+| `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290638114/attempts/1#summary-83821898248 |
+| `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290655449/attempts/1#summary-83821943679 |
+
 ## Operating sequence
 
-Use this sequence after the Phase 6 patch and after future material changes:
+Use this sequence after future material changes:
 
 1. Run `CI - PowerShell Quality Gate`.
 2. Run `Manual - Control Plane Readiness`.
