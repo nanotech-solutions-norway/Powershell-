@@ -1,0 +1,54 @@
+name: Scheduled - Project Health Suite
+
+on:
+  schedule:
+    - cron: "37 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-health-suite:
+    name: Scheduled project health suite
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run all project health adapters
+        shell: pwsh
+        run: |
+          $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
+          foreach ($project in $projects) {
+            Write-Host "Project health: $project"
+            ./scripts/projects/Invoke-ProjectHealthCheck.ps1 -Project $project -TargetEnvironment "development"
+          }
+
+      - name: Summarize project health evidence
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/projects/Convert-ProjectHealthEvidenceSummary.ps1 -EvidenceDirectory "evidence" -OutputDirectory "evidence-summary" -Prefix "scheduled-project-health-summary"
+
+      - name: Upload raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-health-suite-raw-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
+
+      - name: Upload evidence summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-project-health-suite-summary
+          path: evidence-summary/*
+          if-no-files-found: warn
