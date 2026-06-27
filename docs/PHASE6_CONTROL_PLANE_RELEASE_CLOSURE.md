@@ -1,14 +1,14 @@
-# Phase 6 — Control Plane Release Closure — 15:20, 27.06.2026
+# Phase 6 — Control Plane Release Closure — 15:30, 27.06.2026
 
 Repository: `nanotech-solutions-norway/Powershell-`
 
 Phase: `Phase 6 — Control Plane Release Closure`
 
-Status: release-closure documentation implemented; post-patch validation required.
+Status: validated release closure.
 
 ## Purpose
 
-This phase closes the validated read-only PowerShell control-plane release and records the Phase 5 validation baseline for handoff. It is a documentation-first release closure only.
+This phase closes the validated read-only PowerShell control-plane release and records the Phase 5 and Phase 6 validation baselines for handoff. It is a documentation-first release closure only.
 
 This phase does not alter PowerShell execution behavior, workflows, secrets, GitHub environments, external endpoints, deployment paths, or production access.
 
@@ -64,6 +64,16 @@ Known Phase 5 commits:
 | `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290102760/attempts/1#summary-83820537105 |
 | `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290136335/attempts/1#summary-83820622527 |
 
+## Final validated Phase 6 workflow chain
+
+| Workflow | Status | Evidence |
+|---|---|---|
+| `CI - PowerShell Quality Gate` | Working | User-validated Phase 6 baseline |
+| `Manual - Control Plane Readiness` | Working | User-validated Phase 6 baseline |
+| `Manual - Workflow Governance Audit` | Working | User-validated Phase 6 baseline |
+| `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290638114/attempts/1#summary-83821898248 |
+| `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290655449/attempts/1#summary-83821943679 |
+
 ## Release scope boundary
 
 The release closure keeps the control plane read-only and report-driven.
@@ -82,9 +92,9 @@ Use this repository as the source of truth for future PowerShell control-plane o
 
 If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
-## Required post-patch validation sequence
+## Standard future validation sequence
 
-Run the validation sequence after this Phase 6 documentation patch:
+Use this sequence after future material changes:
 
 1. `CI - PowerShell Quality Gate`
 2. `Manual - Control Plane Readiness`
