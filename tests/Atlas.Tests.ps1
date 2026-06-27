@@ -33,6 +33,7 @@ Describe "Atlas AI PowerShell repository baseline" {
         Test-Path (Join-Path $RepoRoot ".github/workflows/scheduled-atlas-health.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-run-script.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-project-health-check.yml") | Should -BeTrue
+        Test-Path (Join-Path $RepoRoot ".github/workflows/scheduled-project-health.yml") | Should -BeTrue
     }
 
     It "does not contain obvious secret files" {
@@ -81,5 +82,13 @@ Describe "Project adapter router" {
         foreach ($project in @("atlas","solarex","domeneshop","conta","wix")) {
             $content | Should -Match $project
         }
+    }
+
+    It "scheduled project health matrix includes all supported projects" {
+        $content = Get-Content -Path (Join-Path $RepoRoot ".github/workflows/scheduled-project-health.yml") -Raw
+        foreach ($project in @("atlas","solarex","domeneshop","conta","wix")) {
+            $content | Should -Match $project
+        }
+        $content | Should -Match "fail-fast: false"
     }
 }
