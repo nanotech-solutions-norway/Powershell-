@@ -98,7 +98,10 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    print("Python debug diagnostics completed. Artifacts were written without printing secrets.")
+    print(
+        "Python debug diagnostics completed. "
+        "Artifacts were written without printing secrets."
+    )
     return 0
 
 
