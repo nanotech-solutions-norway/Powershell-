@@ -1,0 +1,103 @@
+name: Manual - Project Health Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Project adapter"
+        required: true
+        type: choice
+        default: atlas
+        options:
+          - atlas
+          - solarex
+          - domeneshop
+          - conta
+          - wix
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+          - staging
+          - production
+      base_url:
+        description: "Optional override base URL"
+        required: false
+        default: ""
+      path:
+        description: "Optional override path"
+        required: false
+        default: ""
+      check_mode:
+        description: "Optional override check mode"
+        required: false
+        type: choice
+        default: auto
+        options:
+          - auto
+          - dns
+          - http
+      fail_on_unhealthy:
+        description: "Fail the workflow if endpoint is not healthy"
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-health-check:
+    name: Project health check
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run project health check
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          $params = @{
+            Project = "${{ inputs.project }}"
+            TargetEnvironment = "${{ inputs.target_environment }}"
+          }
+
+          if (-not [string]::IsNullOrWhiteSpace("${{ inputs.base_url }}")) {
+            $params.BaseUrl = "${{ inputs.base_url }}"
+          }
+
+          if (-not [string]::IsNullOrWhiteSpace("${{ inputs.path }}")) {
+            $params.Path = "${{ inputs.path }}"
+          }
+
+          if ("${{ inputs.check_mode }}" -ne "auto") {
+            $params.CheckMode = "${{ inputs.check_mode }}"
+          }
+
+          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
+            $params.FailOnUnhealthy = $true
+          }
+
+          ./scripts/projects/Invoke-ProjectHealthCheck.ps1 @params
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-health-evidence
+          path: evidence/*.json
+          if-no-files-found: warn
