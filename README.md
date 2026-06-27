@@ -1,4 +1,4 @@
-# Atlas AI GitHub PowerShell Blueprint — 26.06.2026
+# Atlas AI GitHub PowerShell Blueprint — 15:20, 27.06.2026
 
 This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
 
@@ -20,31 +20,47 @@ Primary operating purpose:
 | Security posture | Read-first, write-paused by default, environment-gated |
 | Mobile control | Android browser or GitHub app triggers Actions manually |
 
+## Current release closure baseline
+
+Phase 6 records the validated control-plane release closure. Phase 5, `Project Control Report Classification Hardening`, is implemented and validated.
+
+Final validated Phase 5 workflow chain:
+
+| Workflow | Status | Evidence |
+|---|---|---|
+| `CI - PowerShell Quality Gate` | Working | User-validated Phase 5 baseline |
+| `Manual - Project Health Suite` | Working | User-validated Phase 5 baseline |
+| `Manual - Workflow Governance Audit` | Working | User-validated Phase 5 baseline |
+| `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290102760/attempts/1#summary-83820537105 |
+| `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290136335/attempts/1#summary-83820622527 |
+
+Release boundary:
+
+- production writes remain out of scope
+- deployment writes remain out of scope
+- future write gates require a separate approved phase
+
 ## Recommended operating order
 
-1. Add repository secrets and variables in GitHub.
-2. Keep all write/deploy workflows paused until validation is complete.
-3. Run `CI - PowerShell Quality Gate`.
-4. Run `Manual - Atlas Health Check`.
-5. Run `Manual - Atlas Validation`.
-6. Run `Manual - Atlas Deployment Preflight`.
-7. Run `Manual - Project Health Check` for each project adapter.
-8. Run `Scheduled - Project Health Matrix` manually once.
-9. Enable staging deployment only after health, validation, and preflight pass.
-10. Enable production deployment only behind a protected GitHub Environment.
+1. Keep all write/deploy workflows paused until a separate write-gate phase is explicitly approved.
+2. Run `CI - PowerShell Quality Gate`.
+3. Run `Manual - Control Plane Readiness`.
+4. Run `Manual - Workflow Governance Audit` with `fail_on_finding: false`.
+5. Run `Manual - Project Control Report` with `target_environment: development`.
+6. Run `Scheduled - Project Control Report` manually once after material changes.
+7. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
 
 | Workflow | Purpose |
 |---|---|
 | `CI - PowerShell Quality Gate` | PSScriptAnalyzer + Pester baseline |
-| `Manual - Atlas Health Check` | Manual Atlas DNS/HTTP health check |
-| `Manual - Atlas Validation` | Repository and endpoint validation |
-| `Manual - Atlas Deployment Preflight` | Deployment-readiness gate without writes |
-| `Manual - Project Health Check` | Project adapter health check for Atlas, SolarEX, Domeneshop, Conta, Wix |
-| `Scheduled - Project Health Matrix` | Scheduled matrix health evidence for all project adapters |
-| `Manual - Run Approved PowerShell Script` | Controlled manual script execution |
-| `Scheduled - Atlas Health Evidence` | Daily scheduled health evidence |
+| `Manual - Control Plane Readiness` | Readiness artifact and file-set validation |
+| `Manual - Project Health Suite` | Manual project health and diagnostics evidence |
+| `Manual - Workflow Governance Audit` | Workflow posture and governance review |
+| `Manual - Project Control Report` | Development-first consolidated project control report |
+| `Scheduled - Project Control Report` | Scheduled project control report, manually runnable after material changes |
+| `Manual - Run Approved PowerShell Script` | Controlled manual script execution, subject to repository guardrails |
 
 ## Documents
 
@@ -61,16 +77,24 @@ Primary operating purpose:
 | `docs/09_phase2_operations.md` | Phase 2 hardening and next operating steps |
 | `docs/10_phase3_project_adapters.md` | Project adapter model and default health targets |
 | `docs/11_phase4_scheduled_project_health.md` | Scheduled project health matrix note |
+| `docs/CONTROL_PLANE_COMPLETION_REPORT.md` | Completion status and validated operating state |
+| `docs/CONTROL_PLANE_HANDOFF.md` | Handoff instructions and validation order |
+| `docs/CONTROL_PLANE_RELEASE_PHASE.md` | Release phase marker and scope boundary |
+| `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md` | Phase 6 release closure note and Phase 5 validation record |
+| `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
+| `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
 ## Write gate
 
 Write functions are structurally prepared but paused by default.
 
-Keep this repository variable unless a specific staging/production write operation is approved:
+Keep this repository variable unless a specific staging/production write operation is approved in a separate write-gate phase:
 
 ```text
 WRITE_TOOLS_ENABLED=false
 ```
+
+Production writes remain out of scope. Deployment writes remain out of scope. Future write gates require a separate approved phase.
 
 ## Key principle
 
