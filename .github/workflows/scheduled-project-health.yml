@@ -1,0 +1,65 @@
+name: Scheduled - Project Health Matrix
+
+on:
+  schedule:
+    - cron: "27 6 * * *"
+  workflow_dispatch:
+    inputs:
+      fail_on_unhealthy:
+        description: "Fail individual matrix job if project is unhealthy"
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  project-health-matrix:
+    name: Project health - ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    environment: development
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - atlas
+          - solarex
+          - domeneshop
+          - conta
+          - wix
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run project adapter health check
+        shell: pwsh
+        env:
+          ATLAS_HEALTH_BEARER_TOKEN: ${{ secrets.ATLAS_HEALTH_BEARER_TOKEN }}
+        run: |
+          $params = @{
+            Project = "${{ matrix.project }}"
+            TargetEnvironment = "development"
+          }
+
+          if ("${{ inputs.fail_on_unhealthy || 'false' }}" -eq "true") {
+            $params.FailOnUnhealthy = $true
+          }
+
+          ./scripts/projects/Invoke-ProjectHealthCheck.ps1 @params
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-health-evidence-${{ matrix.project }}
+          path: evidence/*.json
+          if-no-files-found: warn
