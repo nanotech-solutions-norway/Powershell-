@@ -53,7 +53,7 @@ jobs:
             }
             catch {
               $failed += $project
-              Write-Warning "Project health check threw an exception for $project: $($_.Exception.Message)"
+              Write-Warning "Project health check threw an exception for ${project}: $($_.Exception.Message)"
               if ($strict) {
                 throw
               }
@@ -65,11 +65,18 @@ jobs:
           }
 
       - name: Summarize project health evidence
+        if: always()
         shell: pwsh
         run: |
-          ./scripts/projects/Convert-ProjectHealthEvidenceSummary.ps1 `
-            -EvidenceDirectory "evidence" `
-            -OutputDirectory "evidence-summary"
+          if (Test-Path "evidence") {
+            ./scripts/projects/Convert-ProjectHealthEvidenceSummary.ps1 `
+              -EvidenceDirectory "evidence" `
+              -OutputDirectory "evidence-summary"
+          }
+          else {
+            New-Item -ItemType Directory -Path "evidence-summary" -Force | Out-Null
+            "No evidence directory was created by the health suite." | Set-Content -Path "evidence-summary/project-health-summary-missing-evidence.md" -Encoding UTF8
+          }
 
       - name: Upload raw evidence
         if: always()
