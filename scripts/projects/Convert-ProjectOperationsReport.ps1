@@ -16,6 +16,55 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function Get-ProjectReviewReason {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$HealthClassification,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$CheckMode,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$DnsClassification,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$HttpClassification
+    )
+
+    if ($HealthClassification -eq "missing") {
+        return "missing_health_evidence"
+    }
+
+    if ($HealthClassification -ne "healthy") {
+        return "primary_health_$HealthClassification"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($CheckMode)) {
+        return "none"
+    }
+
+    switch ($CheckMode) {
+        "dns" {
+            if ($DnsClassification -in @("missing","resolved")) {
+                return "none"
+            }
+            return "diagnostic_dns_$DnsClassification"
+        }
+        "http" {
+            if ($HttpClassification -in @("missing","healthy")) {
+                return "none"
+            }
+            return "diagnostic_http_$HttpClassification"
+        }
+        default {
+            return "none"
+        }
+    }
+}
+
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
 $projects = @("atlas", "solarex", "domeneshop", "conta", "wix")
@@ -55,23 +104,27 @@ foreach ($project in $projects) {
     $diagnostics = $diagnosticItems[$project]
 
     $healthClassification = if ($health) { [string]$health.classification } else { "missing" }
+    $checkMode = if ($health -and $null -ne $health.check_mode) { [string]$health.check_mode } else { "missing" }
     $dnsClassification = if ($diagnostics) { [string]$diagnostics.dns_classification } else { "missing" }
     $httpClassification = if ($diagnostics) { [string]$diagnostics.http_classification } else { "missing" }
     $httpStatus = if ($diagnostics) { $diagnostics.http_status } elseif ($health) { $health.http_status } else { $null }
     $targetHost = if ($diagnostics) { $diagnostics.host } elseif ($health) { $health.host } else { "" }
+    $reviewReason = Get-ProjectReviewReason -HealthClassification $healthClassification -CheckMode $checkMode -DnsClassification $dnsClassification -HttpClassification $httpClassification
 
-    $reviewRequired = $healthClassification -ne "healthy" -or $dnsClassification -ne "resolved" -or $httpClassification -ne "healthy"
+    $reviewRequired = $reviewReason -ne "none"
     $status = if (-not $reviewRequired) { "healthy" } else { "review_required" }
 
     $rows += [pscustomobject]@{
         project = $project
         status = $status
         health_classification = $healthClassification
+        check_mode = $checkMode
         dns_classification = $dnsClassification
         http_classification = $httpClassification
         http_status = $httpStatus
         host = $targetHost
         review_required = $reviewRequired
+        review_reason = $reviewReason
     }
 }
 
@@ -82,7 +135,7 @@ $jsonPath = Join-Path $OutputDirectory "$Prefix-$timestamp.json"
 $mdPath = Join-Path $OutputDirectory "$Prefix-$timestamp.md"
 
 $summary = [ordered]@{
-    schema_version = "1.0"
+    schema_version = "1.1"
     generated_utc = (Get-Date).ToUniversalTime().ToString("o")
     evidence_directory = $EvidenceDirectory
     total_projects = $rows.Count
@@ -104,10 +157,10 @@ $lines += "| Projects | $($summary.total_projects) |"
 $lines += "| Review required | $($summary.review_count) |"
 $lines += "| Overall classification | $($summary.overall_classification) |"
 $lines += ""
-$lines += "| Project | Status | Health | DNS | HTTP | HTTP status | Host |"
-$lines += "|---|---|---|---|---|---:|---|"
+$lines += "| Project | Status | Health | Mode | DNS | HTTP | HTTP status | Host | Review reason |"
+$lines += "|---|---|---|---|---|---|---:|---|---|"
 foreach ($row in $rows) {
-    $lines += "| $($row.project) | $($row.status) | $($row.health_classification) | $($row.dns_classification) | $($row.http_classification) | $($row.http_status) | $($row.host) |"
+    $lines += "| $($row.project) | $($row.status) | $($row.health_classification) | $($row.check_mode) | $($row.dns_classification) | $($row.http_classification) | $($row.http_status) | $($row.host) | $($row.review_reason) |"
 }
 
 $lines | Set-Content -Path $mdPath -Encoding UTF8
