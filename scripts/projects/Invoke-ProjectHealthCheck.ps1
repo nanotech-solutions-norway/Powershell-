@@ -1,10 +1,3 @@
-<#
-.SYNOPSIS
-Runs a project-specific health check using the shared Atlas AI PowerShell evidence model.
-.DESCRIPTION
-This router keeps project-specific defaults in one place while reusing the Atlas health script implementation.
-Write functions are not enabled by this script.
-#>
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("atlas","solarex","domeneshop","conta","wix")]
@@ -43,26 +36,31 @@ $defaults = @{
         BaseUrl = "https://www.atlas-ai.no"
         Path = "/"
         CheckMode = "dns"
+        ProjectLabel = "Atlas AI"
     }
     solarex = @{
         BaseUrl = "https://nanotech-solutions-norway.github.io/SolarEX-Final-recreate/"
         Path = "/"
         CheckMode = "http"
+        ProjectLabel = "SolarEX"
     }
     domeneshop = @{
         BaseUrl = "https://forms.nanotech-solutions.com"
         Path = "/solarex_forms/health.php"
         CheckMode = "http"
+        ProjectLabel = "Domeneshop Forms"
     }
     conta = @{
         BaseUrl = "https://mcp.atlas-ai.no"
         Path = "/health"
         CheckMode = "http"
+        ProjectLabel = "Conta MCP"
     }
     wix = @{
         BaseUrl = "https://www.atlas-ai.no"
         Path = "/"
         CheckMode = "dns"
+        ProjectLabel = "Wix Atlas"
     }
 }
 
@@ -82,6 +80,7 @@ if ([string]::IsNullOrWhiteSpace($CheckMode)) {
 
 Write-Host "Project health check"
 Write-Host "Project: $Project"
+Write-Host "ProjectLabel: $($selected.ProjectLabel)"
 Write-Host "BaseUrl: $BaseUrl"
 Write-Host "Path: $Path"
 Write-Host "CheckMode: $CheckMode"
@@ -90,6 +89,8 @@ Write-Host "TargetEnvironment: $TargetEnvironment"
 $params = @{
     BaseUrl = $BaseUrl
     Path = $Path
+    ProjectKey = $Project
+    ProjectLabel = $selected.ProjectLabel
     CheckMode = $CheckMode
     TargetEnvironment = $TargetEnvironment
     WriteMode = "read_only"
