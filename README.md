@@ -1,4 +1,4 @@
-# Atlas AI GitHub PowerShell Blueprint — 15:20, 27.06.2026
+# Atlas AI GitHub PowerShell Blueprint — 15:30, 27.06.2026
 
 This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
 
@@ -24,15 +24,15 @@ Primary operating purpose:
 
 Phase 6 records the validated control-plane release closure. Phase 5, `Project Control Report Classification Hardening`, is implemented and validated.
 
-Final validated Phase 5 workflow chain:
+Final validated Phase 6 workflow chain:
 
 | Workflow | Status | Evidence |
 |---|---|---|
-| `CI - PowerShell Quality Gate` | Working | User-validated Phase 5 baseline |
-| `Manual - Project Health Suite` | Working | User-validated Phase 5 baseline |
-| `Manual - Workflow Governance Audit` | Working | User-validated Phase 5 baseline |
-| `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290102760/attempts/1#summary-83820537105 |
-| `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290136335/attempts/1#summary-83820622527 |
+| `CI - PowerShell Quality Gate` | Working | User-validated Phase 6 baseline |
+| `Manual - Control Plane Readiness` | Working | User-validated Phase 6 baseline |
+| `Manual - Workflow Governance Audit` | Working | User-validated Phase 6 baseline |
+| `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290638114/attempts/1#summary-83821898248 |
+| `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290655449/attempts/1#summary-83821943679 |
 
 Release boundary:
 
@@ -80,7 +80,7 @@ Release boundary:
 | `docs/CONTROL_PLANE_COMPLETION_REPORT.md` | Completion status and validated operating state |
 | `docs/CONTROL_PLANE_HANDOFF.md` | Handoff instructions and validation order |
 | `docs/CONTROL_PLANE_RELEASE_PHASE.md` | Release phase marker and scope boundary |
-| `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md` | Phase 6 release closure note and Phase 5 validation record |
+| `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md` | Phase 6 release closure note and validation record |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
