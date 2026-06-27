@@ -23,6 +23,7 @@ Describe "Atlas AI PowerShell repository baseline" {
 
     It "has required project adapter scripts" {
         Test-Path (Join-Path $RepoRoot "scripts/projects/Invoke-ProjectHealthCheck.ps1") | Should -BeTrue
+        Test-Path (Join-Path $RepoRoot "scripts/projects/Convert-ProjectHealthEvidenceSummary.ps1") | Should -BeTrue
     }
 
     It "has required GitHub workflows" {
@@ -34,6 +35,7 @@ Describe "Atlas AI PowerShell repository baseline" {
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-run-script.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/manual-project-health-check.yml") | Should -BeTrue
         Test-Path (Join-Path $RepoRoot ".github/workflows/scheduled-project-health.yml") | Should -BeTrue
+        Test-Path (Join-Path $RepoRoot ".github/workflows/manual-project-health-suite.yml") | Should -BeTrue
     }
 
     It "does not contain obvious secret files" {
@@ -90,5 +92,12 @@ Describe "Project adapter router" {
             $content | Should -Match $project
         }
         $content | Should -Match "fail-fast: false"
+    }
+
+    It "manual project health suite creates and uploads summaries" {
+        $content = Get-Content -Path (Join-Path $RepoRoot ".github/workflows/manual-project-health-suite.yml") -Raw
+        $content | Should -Match "Convert-ProjectHealthEvidenceSummary.ps1"
+        $content | Should -Match "project-health-suite-summary"
+        $content | Should -Match "project-health-suite-raw-evidence"
     }
 }
