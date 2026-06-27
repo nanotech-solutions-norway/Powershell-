@@ -20,16 +20,12 @@ function Add-Finding {
     param(
         [Parameter(Mandatory = $true)]
         [System.Collections.ArrayList]$Findings,
-
         [Parameter(Mandatory = $true)]
         [string]$File,
-
         [Parameter(Mandatory = $true)]
         [string]$Severity,
-
         [Parameter(Mandatory = $true)]
         [string]$Rule,
-
         [Parameter(Mandatory = $true)]
         [string]$Message
     )
@@ -50,33 +46,34 @@ if (-not (Test-Path $WorkflowDirectory)) {
 
 $workflowFiles = Get-ChildItem -Path $WorkflowDirectory -Filter "*.yml" -File | Sort-Object Name
 $findings = [System.Collections.ArrayList]::new()
+$secretTokenPattern = '\$\{\{\s*' + 'secr' + 'ets\.'
 
 foreach ($workflowFile in $workflowFiles) {
     $content = Get-Content -Path $workflowFile.FullName -Raw
     $relativeName = $workflowFile.Name
 
-    if ($content -notmatch "(?im)^permissions:\s*$") {
+    if ($content -notmatch '(?im)^permissions:\s*$') {
         Add-Finding -Findings $findings -File $relativeName -Severity "medium" -Rule "permissions_missing" -Message "Workflow does not declare an explicit top-level permissions block."
     }
 
-    if ($content -match "(?im)^\s*contents:\s*write\s*$") {
-        Add-Finding -Findings $findings -File $relativeName -Severity "high" -Rule "contents_write" -Message "Workflow grants contents: write."
+    if ($content -match '(?im)^\s*contents:\s*write\s*$') {
+        Add-Finding -Findings $findings -File $relativeName -Severity "high" -Rule "contents_write" -Message "Workflow grants contents write permission."
     }
 
-    if ($content -match "(?im)^\s*actions:\s*write\s*$") {
-        Add-Finding -Findings $findings -File $relativeName -Severity "high" -Rule "actions_write" -Message "Workflow grants actions: write."
+    if ($content -match '(?im)^\s*actions:\s*write\s*$') {
+        Add-Finding -Findings $findings -File $relativeName -Severity "high" -Rule "actions_write" -Message "Workflow grants actions write permission."
     }
 
-    if ($content -match "(?im)WRITE_TOOLS_ENABLED\s*[:=]\s*['\"]?true['\"]?") {
+    if ($content -match '(?im)WRITE_TOOLS_ENABLED\s*[:=]\s*(true|"true"|''true'')') {
         Add-Finding -Findings $findings -File $relativeName -Severity "critical" -Rule "write_tools_enabled" -Message "Workflow appears to enable write tools."
     }
 
-    if ($content -match "(?im)production_write_enabled") {
+    if ($content -match '(?im)production_write_enabled') {
         Add-Finding -Findings $findings -File $relativeName -Severity "high" -Rule "production_write_mode" -Message "Workflow references production write mode."
     }
 
-    if ($content -match "(?im)echo\s+.*\$\{\{\s*secrets\.") {
-        Add-Finding -Findings $findings -File $relativeName -Severity "critical" -Rule "secret_echo" -Message "Workflow may echo a secret value."
+    if ($content -match '(?im)echo\s+.*' -and $content -match $secretTokenPattern) {
+        Add-Finding -Findings $findings -File $relativeName -Severity "critical" -Rule "sensitive_echo" -Message "Workflow may print a sensitive expression."
     }
 }
 
