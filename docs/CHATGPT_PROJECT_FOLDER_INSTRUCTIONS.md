@@ -1,4 +1,4 @@
-# ChatGPT Project Folder Instructions for PowerShell Operations
+# ChatGPT Project Folder Instructions for PowerShell Operations — 15:20, 27.06.2026
 
 ## Recommended ChatGPT Project folder name
 
@@ -23,6 +23,7 @@ Upload or reference these repo documents when useful:
 - `docs/CONTROL_PLANE_HANDOFF.md`
 - `docs/CONTROL_PLANE_RELEASE_PHASE.md`
 - `docs/CONTROL_PLANE_COMPLETION_REPORT.md`
+- `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md`
 - `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md`
 - `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md`
 
@@ -39,13 +40,14 @@ Default operating posture:
 - Read-only and report-driven.
 - Development environment first.
 - No production writes unless a separate explicit future phase creates and validates write approval gates.
+- No deployment writes unless a separate explicit future phase creates and validates write approval gates.
 - If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing a fix.
 - Patch the repository only in small isolated steps.
 - After each patch, provide the next validation sequence.
 
-Validated baseline:
+Validated Phase 5 workflow chain:
 - CI - PowerShell Quality Gate
-- Manual - Control Plane Readiness
+- Manual - Project Health Suite
 - Manual - Workflow Governance Audit
 - Manual - Project Control Report
 - Scheduled - Project Control Report
@@ -53,9 +55,14 @@ Validated baseline:
 Standard validation order:
 1. CI - PowerShell Quality Gate
 2. Manual - Control Plane Readiness
-3. Manual - Workflow Governance Audit
+3. Manual - Workflow Governance Audit with fail_on_finding: false
 4. Manual - Project Control Report using target_environment: development
 5. Scheduled - Project Control Report manually after material changes
+
+Release boundary:
+- production writes remain out of scope
+- deployment writes remain out of scope
+- future write gates require a separate approved phase
 
 When the user says "working" or "validated", continue with the next isolated safe phase. When the user attaches logs, diagnose the logs first and then patch only the failing layer.
 ```
@@ -68,6 +75,7 @@ Use one chat per phase or issue:
 - `PowerShell - Workflow Failure Triage`
 - `PowerShell - Control Reports`
 - `PowerShell - Governance Audit`
+- `PowerShell - Release Closure`
 - `PowerShell - Future Write Phase`
 
 ## Copy-paste starter command
@@ -75,5 +83,5 @@ Use one chat per phase or issue:
 Start a new chat in the Project with:
 
 ```text
-PowerShell: review current baseline and tell me the next safe validation or implementation step. Use repo nanotech-solutions-norway/Powershell- as source of truth. Keep write operations out of scope unless explicitly approved as a new phase.
+PowerShell: review current baseline and tell me the next safe validation or implementation step. Use repo nanotech-solutions-norway/Powershell- as source of truth. Keep production writes, deployment writes, and write gates out of scope unless explicitly approved as a new phase.
 ```
