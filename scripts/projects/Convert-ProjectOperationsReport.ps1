@@ -58,7 +58,7 @@ foreach ($project in $projects) {
     $dnsClassification = if ($diagnostics) { [string]$diagnostics.dns_classification } else { "missing" }
     $httpClassification = if ($diagnostics) { [string]$diagnostics.http_classification } else { "missing" }
     $httpStatus = if ($diagnostics) { $diagnostics.http_status } elseif ($health) { $health.http_status } else { $null }
-    $host = if ($diagnostics) { $diagnostics.host } elseif ($health) { $health.host } else { "" }
+    $targetHost = if ($diagnostics) { $diagnostics.host } elseif ($health) { $health.host } else { "" }
 
     $reviewRequired = $healthClassification -ne "healthy" -or $dnsClassification -ne "resolved" -or $httpClassification -ne "healthy"
     $status = if (-not $reviewRequired) { "healthy" } else { "review_required" }
@@ -70,7 +70,7 @@ foreach ($project in $projects) {
         dns_classification = $dnsClassification
         http_classification = $httpClassification
         http_status = $httpStatus
-        host = $host
+        host = $targetHost
         review_required = $reviewRequired
     }
 }
