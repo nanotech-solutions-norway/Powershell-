@@ -13,6 +13,13 @@ param(
     [string]$Path = "/",
 
     [Parameter(Mandatory = $false)]
+    [ValidatePattern("^[a-z0-9-]+$")]
+    [string]$ProjectKey = "atlas",
+
+    [Parameter(Mandatory = $false)]
+    [string]$ProjectLabel = "Atlas AI",
+
+    [Parameter(Mandatory = $false)]
     [ValidateSet("dns","http")]
     [string]$CheckMode = "dns",
 
@@ -31,6 +38,27 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function Resolve-HealthCheckUri {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUrl,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = "/"
+    )
+
+    $normalizedBaseUrl = $BaseUrl
+    if ($normalizedBaseUrl -notmatch '^https?://') {
+        $normalizedBaseUrl = "https://$normalizedBaseUrl"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or $Path -eq "/") {
+        return [System.Uri]::new($normalizedBaseUrl)
+    }
+
+    return [System.Uri]::new(([System.Uri]::new($normalizedBaseUrl)), $Path)
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "../..")
 $commonDir = Join-Path $repoRoot "scripts/common"
 $initializeContextPath = Join-Path $commonDir "Initialize-AtlasContext.ps1"
@@ -44,18 +72,13 @@ if (-not (Test-Path $writeEvidencePath)) {
     throw "Required script not found: $writeEvidencePath"
 }
 
-$context = & $initializeContextPath -Project "Atlas AI" -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
+$context = & $initializeContextPath -Project $ProjectLabel -TargetEnvironment $TargetEnvironment -WriteMode $WriteMode
 
 if ($WriteMode -ne "read_only") {
     Write-Host "Health check is read-only. Requested write mode '$WriteMode' will not perform writes."
 }
 
-$normalizedBaseUrl = $BaseUrl
-if ($normalizedBaseUrl -notmatch '^https?://') {
-    $normalizedBaseUrl = "https://$normalizedBaseUrl"
-}
-
-$uri = [System.Uri]::new(([System.Uri]::new($normalizedBaseUrl)), $Path)
+$uri = Resolve-HealthCheckUri -BaseUrl $BaseUrl -Path $Path
 $hostName = $uri.Host
 
 $statusCode = $null
@@ -130,8 +153,9 @@ else {
 $strictFailure = ($classification -notin @("healthy"))
 
 $evidence = @{
-    schema_version = "1.0"
-    project = "Atlas AI"
+    schema_version = "1.1"
+    project = $ProjectKey
+    project_label = $ProjectLabel
     target_environment = $TargetEnvironment
     workflow = $context.Workflow
     repository = $context.Repository
@@ -152,10 +176,10 @@ $evidence = @{
     error_summary = $errorSummary
 }
 
-& $writeEvidencePath -Evidence $evidence -Prefix "atlas-health"
+& $writeEvidencePath -Evidence $evidence -Prefix "project-health-$ProjectKey"
 
 if ($strictFailure) {
-    Write-Warning "Atlas health classification: $classification"
+    Write-Warning "$ProjectLabel health classification: $classification"
 
     if ($CheckMode -eq "http") {
         Write-Warning "HTTP mode requires the checked route to return a healthy 2xx/3xx status. For domains without a published homepage, use CheckMode=dns."
@@ -169,4 +193,4 @@ if ($strictFailure) {
     exit 0
 }
 
-Write-Host "Atlas health classification: $classification"
+Write-Host "$ProjectLabel health classification: $classification"
