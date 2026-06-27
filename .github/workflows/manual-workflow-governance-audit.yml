@@ -39,7 +39,7 @@ jobs:
           if ("${{ inputs.fail_on_finding }}" -eq "true") {
             $params.FailOnFinding = $true
           }
-          ./scripts/governance/Test-WorkflowGovernance.ps1 @params
+          ./scripts/governance/Test-WorkflowWritePosture.ps1 @params
 
       - name: Upload governance report
         if: always()
