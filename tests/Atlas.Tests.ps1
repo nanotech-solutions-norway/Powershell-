@@ -62,6 +62,14 @@ Describe "Atlas AI PowerShell repository baseline" {
             $content | Should -Not -Match '@arguments'
         }
     }
+
+    It "does not use unsafe variable-colon interpolation in workflow PowerShell" {
+        $workflowFiles = Get-ChildItem (Join-Path $RepoRoot ".github/workflows") -Filter "*.yml"
+        foreach ($workflow in $workflowFiles) {
+            $content = Get-Content -Path $workflow.FullName -Raw
+            $content | Should -Not -Match '\$project:'
+        }
+    }
 }
 
 Describe "Atlas AI write gate" {
@@ -99,5 +107,6 @@ Describe "Project adapter router" {
         $content | Should -Match "Convert-ProjectHealthEvidenceSummary.ps1"
         $content | Should -Match "project-health-suite-summary"
         $content | Should -Match "project-health-suite-raw-evidence"
+        $content | Should -Match "if: always\(\)"
     }
 }
