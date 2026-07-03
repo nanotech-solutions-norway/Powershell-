@@ -1,4 +1,4 @@
-# Atlas AI GitHub PowerShell Blueprint — 19:45, 03.07.2026
+# Atlas AI GitHub PowerShell Blueprint — 03.07.2026
 
 This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
 
@@ -51,6 +51,26 @@ Scope:
 - no deployment authority
 - no secret, environment, or external endpoint changes
 
+## Phase 8 Domeneshop MCP read-only validation status
+
+Phase 8 adds development-first, read-only validation coverage for the Domeneshop MCP public endpoint and HTTPS/TLS readiness diagnostics.
+
+Validated workflows:
+
+- `Manual - Domeneshop MCP Endpoint Validation`
+- `Manual - Domeneshop MCP HTTPS Readiness`
+- `Manual - Dispatch Standard Validation Sequence`
+
+Scope:
+
+- development environment only
+- read-only endpoint validation only
+- no provider writes
+- no DNS writes
+- no file or SQL mutations
+- no bearer-token workflow validation yet
+- HTTPS production readiness remains pending certificate correction
+
 ## Recommended operating order
 
 1. Keep all production/deployment workflows paused until a separate write-gate phase is explicitly approved.
@@ -60,7 +80,8 @@ Scope:
 5. Run `Manual - Project Control Report` with `target_environment: development`.
 6. Run `Scheduled - Project Control Report` manually once after material changes.
 7. For Phase 7 development maintenance, run `Manual - Development Maintenance Task` first with `dry_run: true`, then with `dry_run: false` only for approved documentation targets.
-8. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
+8. For Domeneshop MCP read-only validation, run `Manual - Domeneshop MCP Endpoint Validation` and `Manual - Domeneshop MCP HTTPS Readiness` before considering HTTPS, bearer-status, or write-gate progression.
+9. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
 
@@ -74,6 +95,9 @@ Scope:
 | `Scheduled - Project Control Report` | Scheduled project control report, manually runnable after material changes |
 | `Manual - Run Approved PowerShell Script` | Controlled manual script execution, subject to repository guardrails |
 | `Manual - Development Maintenance Task` | Development-only approved documentation maintenance with repository commit capability |
+| `Manual - Dispatch Standard Validation Sequence` | Manual dispatcher for the standard validation sequence |
+| `Manual - Domeneshop MCP Endpoint Validation` | Read-only public Domeneshop MCP endpoint payload validation |
+| `Manual - Domeneshop MCP HTTPS Readiness` | Read-only Domeneshop MCP HTTPS/TLS readiness diagnostic |
 
 ## Documents
 
@@ -95,6 +119,7 @@ Scope:
 | `docs/CONTROL_PLANE_RELEASE_PHASE.md` | Release phase marker and scope boundary |
 | `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md` | Phase 6 release closure note and validation record |
 | `docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md` | Phase 7 development execution enablement record |
+| `docs/PHASE8_DOMENESHOP_MCP_READONLY_VALIDATION.md` | Phase 8 Domeneshop MCP read-only validation record |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
