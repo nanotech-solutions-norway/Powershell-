@@ -1,0 +1,181 @@
+name: Manual - Dispatch Standard Validation Sequence
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to validate"
+        required: true
+        default: "main"
+      include_scheduled_project_control_report:
+        description: "Also dispatch Scheduled - Project Control Report manually"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+      wait_for_downstream_runs:
+        description: "Wait for each downstream workflow to complete before dispatching the next"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  WRITE_TOOLS_ENABLED: "false"
+  TARGET_ENVIRONMENT: development
+
+jobs:
+  dispatch-standard-validation-sequence:
+    name: Dispatch standard validation sequence
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Dispatch and optionally monitor downstream workflows
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF_NAME: ${{ inputs.ref }}
+          INCLUDE_SCHEDULED: ${{ inputs.include_scheduled_project_control_report }}
+          WAIT_FOR_DOWNSTREAM: ${{ inputs.wait_for_downstream_runs }}
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+
+          New-Item -ItemType Directory -Path "validation-sequence-report" -Force | Out-Null
+
+          function Write-ReportLine {
+            param([string]$Line)
+            $Line | Tee-Object -FilePath "validation-sequence-report/standard-validation-sequence.md" -Append
+          }
+
+          function Get-LatestWorkflowDispatchRun {
+            param(
+              [Parameter(Mandatory = $true)][string]$WorkflowName,
+              [Parameter(Mandatory = $true)][datetime]$NotBeforeUtc
+            )
+
+            $deadline = (Get-Date).ToUniversalTime().AddMinutes(3)
+            do {
+              $json = gh run list --repo $env:REPO --workflow $WorkflowName --limit 20 --json databaseId,workflowName,status,conclusion,createdAt,event,headBranch,url
+              $runs = $json | ConvertFrom-Json
+              $candidate = $runs |
+                Where-Object {
+                  $_.event -eq "workflow_dispatch" -and
+                  $_.headBranch -eq $env:REF_NAME -and
+                  ([datetime]$_.createdAt).ToUniversalTime() -ge $NotBeforeUtc.AddMinutes(-2)
+                } |
+                Sort-Object { [datetime]$_.createdAt } -Descending |
+                Select-Object -First 1
+
+              if ($candidate) {
+                return $candidate
+              }
+
+              Start-Sleep -Seconds 5
+            } while ((Get-Date).ToUniversalTime() -lt $deadline)
+
+            throw "Could not identify downstream run for workflow: $WorkflowName"
+          }
+
+          function Wait-WorkflowRun {
+            param(
+              [Parameter(Mandatory = $true)][int64]$RunId,
+              [Parameter(Mandatory = $true)][string]$WorkflowName
+            )
+
+            $deadline = (Get-Date).ToUniversalTime().AddMinutes(60)
+            do {
+              $json = gh run view $RunId --repo $env:REPO --json databaseId,status,conclusion,name,url,createdAt,updatedAt
+              $run = $json | ConvertFrom-Json
+              Write-Host ("{0}: status={1}; conclusion={2}; url={3}" -f $WorkflowName, $run.status, $run.conclusion, $run.url)
+
+              if ($run.status -eq "completed") {
+                if ($run.conclusion -ne "success") {
+                  throw "Downstream workflow failed: $WorkflowName / run $RunId / conclusion $($run.conclusion)"
+                }
+                return $run
+              }
+
+              Start-Sleep -Seconds 15
+            } while ((Get-Date).ToUniversalTime() -lt $deadline)
+
+            throw "Timed out waiting for downstream workflow: $WorkflowName / run $RunId"
+          }
+
+          function Invoke-WorkflowDispatchStep {
+            param(
+              [Parameter(Mandatory = $true)][string]$WorkflowName,
+              [hashtable]$Inputs = @{}
+            )
+
+            Write-ReportLine "## $WorkflowName"
+            Write-ReportLine ""
+            Write-ReportLine "Dispatching against ref: `$env:REF_NAME`"
+
+            $started = (Get-Date).ToUniversalTime()
+            $args = @("workflow", "run", $WorkflowName, "--repo", $env:REPO, "--ref", $env:REF_NAME)
+            foreach ($key in $Inputs.Keys) {
+              $args += @("-f", "$key=$($Inputs[$key])")
+            }
+
+            Write-Host "gh $($args -join ' ')"
+            & gh @args
+
+            $run = Get-LatestWorkflowDispatchRun -WorkflowName $WorkflowName -NotBeforeUtc $started
+            Write-ReportLine "Run ID: `$($run.databaseId)`"
+            Write-ReportLine "Run URL: $($run.url)"
+
+            if ($env:WAIT_FOR_DOWNSTREAM -eq "true") {
+              $completed = Wait-WorkflowRun -RunId ([int64]$run.databaseId) -WorkflowName $WorkflowName
+              Write-ReportLine "Conclusion: `$($completed.conclusion)`"
+            }
+            else {
+              Write-ReportLine "Conclusion: `not_waited`"
+            }
+
+            Write-ReportLine ""
+          }
+
+          Write-ReportLine "# Standard PowerShell Validation Sequence"
+          Write-ReportLine ""
+          Write-ReportLine "Repository: `$env:REPO`"
+          Write-ReportLine "Ref: `$env:REF_NAME`"
+          Write-ReportLine "Target environment: `development`"
+          Write-ReportLine "WRITE_TOOLS_ENABLED: `$env:WRITE_TOOLS_ENABLED`"
+          Write-ReportLine "Started UTC: `$((Get-Date).ToUniversalTime().ToString('o'))`"
+          Write-ReportLine ""
+
+          Invoke-WorkflowDispatchStep -WorkflowName "CI - PowerShell Quality Gate"
+          Invoke-WorkflowDispatchStep -WorkflowName "Manual - Control Plane Readiness"
+          Invoke-WorkflowDispatchStep -WorkflowName "Manual - Workflow Governance Audit" -Inputs @{ fail_on_finding = "false" }
+          Invoke-WorkflowDispatchStep -WorkflowName "Manual - Project Control Report" -Inputs @{ target_environment = "development" }
+
+          if ($env:INCLUDE_SCHEDULED -eq "true") {
+            Invoke-WorkflowDispatchStep -WorkflowName "Scheduled - Project Control Report"
+          }
+
+          Write-ReportLine "Completed UTC: `$((Get-Date).ToUniversalTime().ToString('o'))`"
+
+      - name: Upload validation sequence dispatcher report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: standard-validation-sequence-dispatch-report
+          path: validation-sequence-report/*
+          if-no-files-found: warn
