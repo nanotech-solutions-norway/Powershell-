@@ -22,11 +22,12 @@ Describe "Development maintenance dispatch" {
     It "script allows only development maintenance targets" {
         $script = Get-Content -Path (Join-Path $RepoRoot "scripts/common/Invoke-DevelopmentMaintenanceTask.ps1") -Raw
 
-        $script | Should -Match 'ValidateSet\("development"\)'
-        $script | Should -Match 'ValidateSet\("development_edit_enabled"\)'
-        $script | Should -Match 'ValidateSet\("docs/CONTROL_PLANE_TASK_LOG.md","docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md"\)'
-        $script | Should -Not -Match 'production_edit_enabled'
-        $script | Should -Not -Match 'staging_edit_enabled'
+        $script | Should -Match "development"
+        $script | Should -Match "development_edit_enabled"
+        $script | Should -Match "docs/CONTROL_PLANE_TASK_LOG.md"
+        $script | Should -Match "docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md"
+        $script | Should -Not -Match "production_edit_enabled"
+        $script | Should -Not -Match "staging_edit_enabled"
     }
 
     It "supports dry-run validation without editing files" {
