@@ -1,0 +1,89 @@
+name: Manual - Development Maintenance Task
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_name:
+        description: "Approved development maintenance task"
+        required: true
+        type: choice
+        default: append_task_log
+        options:
+          - append_task_log
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: development
+        options:
+          - development
+      execution_mode:
+        description: "Execution mode"
+        required: true
+        type: choice
+        default: development_edit_enabled
+        options:
+          - development_edit_enabled
+      target_path:
+        description: "Approved documentation target"
+        required: true
+        type: choice
+        default: docs/CONTROL_PLANE_TASK_LOG.md
+        options:
+          - docs/CONTROL_PLANE_TASK_LOG.md
+          - docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md
+      message:
+        description: "Non-sensitive task message"
+        required: false
+        default: "Development maintenance task executed."
+      dry_run:
+        description: "Run without committing a repository edit"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  development-maintenance:
+    name: Development maintenance task
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run development maintenance task
+        shell: pwsh
+        run: |
+          $dryRun = "${{ inputs.dry_run }}" -eq "true"
+          ./scripts/common/Invoke-DevelopmentMaintenanceTask.ps1 `
+            -TaskName "${{ inputs.task_name }}" `
+            -TargetEnvironment "${{ inputs.target_environment }}" `
+            -ExecutionMode "${{ inputs.execution_mode }}" `
+            -TargetPath "${{ inputs.target_path }}" `
+            -Message "${{ inputs.message }}" `
+            -DryRun:$dryRun
+
+      - name: Commit development maintenance changes
+        if: ${{ inputs.dry_run == 'false' }}
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No repository changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/CONTROL_PLANE_TASK_LOG.md docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md
+          git commit -m "Record development maintenance task"
+          git push origin HEAD:main
