@@ -1,0 +1,101 @@
+name: Manual - Production Operation Task
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_name:
+        description: "Approved production operation task"
+        required: true
+        type: choice
+        default: append_production_log
+        options:
+          - append_production_log
+          - record_deployment_marker
+          - call_approved_external_endpoint
+      target_environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        default: production
+        options:
+          - production
+      execution_mode:
+        description: "Execution mode"
+        required: true
+        type: choice
+        default: production_change_enabled
+        options:
+          - production_change_enabled
+      endpoint_alias:
+        description: "Approved external endpoint alias"
+        required: true
+        type: choice
+        default: primary_external_endpoint
+        options:
+          - primary_external_endpoint
+      message:
+        description: "Non-sensitive operation message"
+        required: false
+        default: "Production operation executed."
+      dry_run:
+        description: "Run without production/deployment/external changes"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  production-operation:
+    name: Production operation task
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run production operation task
+        shell: pwsh
+        env:
+          PRODUCTION_EXTERNAL_ENDPOINT_URL: ${{ secrets.PRODUCTION_EXTERNAL_ENDPOINT_URL }}
+          PRODUCTION_EXTERNAL_ENDPOINT_BEARER_TOKEN: ${{ secrets.PRODUCTION_EXTERNAL_ENDPOINT_BEARER_TOKEN }}
+        run: |
+          $dryRun = "${{ inputs.dry_run }}" -eq "true"
+          ./scripts/common/Invoke-ProductionOperationTask.ps1 `
+            -TaskName "${{ inputs.task_name }}" `
+            -TargetEnvironment "${{ inputs.target_environment }}" `
+            -ExecutionMode "${{ inputs.execution_mode }}" `
+            -EndpointAlias "${{ inputs.endpoint_alias }}" `
+            -Message "${{ inputs.message }}" `
+            -DryRun:$dryRun
+
+      - name: Commit production operation log changes
+        if: ${{ inputs.dry_run == 'false' && (inputs.task_name == 'append_production_log' || inputs.task_name == 'record_deployment_marker') }}
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No repository changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/PRODUCTION_OPERATIONS_LOG.md
+          git commit -m "Record production operation task"
+          git push origin HEAD:main
+
+      - name: Upload production operation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-operation-evidence
+          path: evidence/production-operation-*.json
+          if-no-files-found: warn
