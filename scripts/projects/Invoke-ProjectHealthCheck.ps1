@@ -45,10 +45,10 @@ $defaults = @{
         ProjectLabel = "SolarEX"
     }
     domeneshop = @{
-        BaseUrl = "https://forms.nanotech-solutions.com"
-        Path = "/solarex_forms/health.php"
+        BaseUrl = "http://ds.atlas-ai.no"
+        Path = "/health.php"
         CheckMode = "http"
-        ProjectLabel = "Domeneshop Forms"
+        ProjectLabel = "Domeneshop MCP"
     }
     conta = @{
         BaseUrl = "https://mcp.atlas-ai.no"
