@@ -1,0 +1,54 @@
+name: Manual - Domeneshop MCP HTTPS Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      host_name:
+        description: "Domeneshop MCP host name"
+        required: true
+        default: "ds.atlas-ai.no"
+      http_url:
+        description: "HTTP health URL"
+        required: true
+        default: "http://ds.atlas-ai.no/health.php"
+      https_url:
+        description: "HTTPS health URL"
+        required: true
+        default: "https://ds.atlas-ai.no/health.php"
+
+permissions:
+  contents: read
+
+env:
+  WRITE_TOOLS_ENABLED: "false"
+  TARGET_ENVIRONMENT: development
+
+jobs:
+  domeneshop-mcp-https-readiness:
+    name: Domeneshop MCP HTTPS readiness
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run read-only Domeneshop MCP HTTPS readiness diagnostic
+        shell: pwsh
+        run: |
+          ./scripts/domeneshop/Test-DomeneshopMcpTlsReadiness.ps1 `
+            -HostName "${{ inputs.host_name }}" `
+            -HttpUrl "${{ inputs.http_url }}" `
+            -HttpsUrl "${{ inputs.https_url }}" `
+            -OutputDirectory "domeneshop-mcp-https-readiness-report"
+
+      - name: Upload Domeneshop MCP HTTPS readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeneshop-mcp-https-readiness-report
+          path: domeneshop-mcp-https-readiness-report/*
+          if-no-files-found: warn
