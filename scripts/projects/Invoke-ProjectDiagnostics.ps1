@@ -42,7 +42,7 @@ if (-not (Test-Path $writeEvidencePath)) {
 $defaults = @{
     atlas = @{ BaseUrl = "https://www.atlas-ai.no"; Path = "/" }
     solarex = @{ BaseUrl = "https://nanotech-solutions-norway.github.io/SolarEX-Final-recreate/"; Path = "/" }
-    domeneshop = @{ BaseUrl = "https://forms.nanotech-solutions.com"; Path = "/solarex_forms/health.php" }
+    domeneshop = @{ BaseUrl = "http://ds.atlas-ai.no"; Path = "/health.php" }
     conta = @{ BaseUrl = "https://mcp.atlas-ai.no"; Path = "/health" }
     wix = @{ BaseUrl = "https://www.atlas-ai.no"; Path = "/" }
 }
