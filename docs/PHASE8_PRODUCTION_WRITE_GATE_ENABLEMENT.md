@@ -1,8 +1,8 @@
-# Phase 8 — Production Write-Gate Enablement — 20:08, 03.07.2026
+# Phase 8 — Production Write-Gate Enablement — 21:11, 03.07.2026
 
 Repository: `nanotech-solutions-norway/Powershell-`
 
-Status: implemented; validation required.
+Status: implemented and validated.
 
 ## Purpose
 
@@ -17,6 +17,18 @@ The operator manually validated the Phase 7 sequence before Phase 8 implementati
 3. `Manual - Development Maintenance Task` with `dry_run: false`
 4. `CI - PowerShell Quality Gate` after the workflow-generated commit
 5. Gmail label `GitHub` review
+
+## Phase 8 validation record
+
+The operator confirmed the Phase 8 validation sequence as working after implementation:
+
+1. `CI - PowerShell Quality Gate`
+2. `Manual - Production Operation Task` using `dry_run: true`
+3. `Manual - Production Operation Task` using `dry_run: false` and task `append_production_log`
+4. `CI - PowerShell Quality Gate` after the workflow-generated commit
+5. Gmail label `GitHub` review
+
+Validation classification: `validated_by_operator`.
 
 ## Implemented files
 
@@ -69,12 +81,12 @@ This phase does not add arbitrary deployment scripts. Provider-specific deployme
 - External endpoint URL is loaded from a secret, not from free-text workflow input.
 - Evidence is uploaded as `production-operation-evidence`.
 
-## Required validation sequence
+## Standard validation sequence after future production-operation changes
 
 1. `CI - PowerShell Quality Gate`
 2. `Manual - Production Operation Task` using `dry_run: true`
-3. `Manual - Production Operation Task` using `dry_run: false` and task `append_production_log`
-4. `CI - PowerShell Quality Gate` after the workflow-generated commit
+3. `Manual - Production Operation Task` using `dry_run: false` and the approved task being changed
+4. `CI - PowerShell Quality Gate` after any workflow-generated commit
 5. Gmail label `GitHub` review after the validation runs
 
 ## Failure rule
