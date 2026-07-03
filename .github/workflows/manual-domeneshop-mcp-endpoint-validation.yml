@@ -1,0 +1,60 @@
+name: Manual - Domeneshop MCP Endpoint Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Domeneshop MCP public base URL"
+        required: true
+        default: "http://ds.atlas-ai.no"
+      fail_on_unhealthy:
+        description: "Fail workflow if public endpoint validation is degraded"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+
+env:
+  WRITE_TOOLS_ENABLED: "false"
+  TARGET_ENVIRONMENT: development
+
+jobs:
+  domeneshop-mcp-endpoint-validation:
+    name: Domeneshop MCP endpoint validation
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run read-only Domeneshop MCP endpoint validation
+        shell: pwsh
+        run: |
+          $params = @{
+            BaseUrl = "${{ inputs.base_url }}"
+            OutputDirectory = "domeneshop-mcp-validation-report"
+            ExpectedSiteIdCount = 40
+          }
+
+          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
+            $params.FailOnUnhealthy = $true
+          }
+
+          ./scripts/domeneshop/Test-DomeneshopMcpEndpoint.ps1 @params
+
+      - name: Upload Domeneshop MCP validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeneshop-mcp-endpoint-validation-report
+          path: domeneshop-mcp-validation-report/*
+          if-no-files-found: warn
