@@ -1,4 +1,4 @@
-# Atlas AI GitHub PowerShell Blueprint — 15:30, 27.06.2026
+# Atlas AI GitHub PowerShell Blueprint — 19:45, 03.07.2026
 
 This repository is the reusable **PowerShell execution and automation control layer** for Atlas AI and other NanoTech Solutions Norway projects.
 
@@ -34,21 +34,33 @@ Final validated Phase 6 workflow chain:
 | `Manual - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290638114/attempts/1#summary-83821898248 |
 | `Scheduled - Project Control Report` | Working | https://github.com/nanotech-solutions-norway/Powershell-/actions/runs/28290655449/attempts/1#summary-83821943679 |
 
-Release boundary:
+## Phase 7 development execution status
 
-- production writes remain out of scope
-- deployment writes remain out of scope
-- future write gates require a separate approved phase
+Phase 7 adds a development-only workflow-dispatch maintenance path with repository commit capability.
+
+Workflow:
+
+- `Manual - Development Maintenance Task`
+
+Scope:
+
+- development environment only
+- approved documentation-maintenance task only
+- approved targets under `docs/` only
+- no production authority
+- no deployment authority
+- no secret, environment, or external endpoint changes
 
 ## Recommended operating order
 
-1. Keep all write/deploy workflows paused until a separate write-gate phase is explicitly approved.
+1. Keep all production/deployment workflows paused until a separate write-gate phase is explicitly approved.
 2. Run `CI - PowerShell Quality Gate`.
 3. Run `Manual - Control Plane Readiness`.
 4. Run `Manual - Workflow Governance Audit` with `fail_on_finding: false`.
 5. Run `Manual - Project Control Report` with `target_environment: development`.
 6. Run `Scheduled - Project Control Report` manually once after material changes.
-7. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
+7. For Phase 7 development maintenance, run `Manual - Development Maintenance Task` first with `dry_run: true`, then with `dry_run: false` only for approved documentation targets.
+8. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
 
@@ -61,6 +73,7 @@ Release boundary:
 | `Manual - Project Control Report` | Development-first consolidated project control report |
 | `Scheduled - Project Control Report` | Scheduled project control report, manually runnable after material changes |
 | `Manual - Run Approved PowerShell Script` | Controlled manual script execution, subject to repository guardrails |
+| `Manual - Development Maintenance Task` | Development-only approved documentation maintenance with repository commit capability |
 
 ## Documents
 
@@ -81,12 +94,13 @@ Release boundary:
 | `docs/CONTROL_PLANE_HANDOFF.md` | Handoff instructions and validation order |
 | `docs/CONTROL_PLANE_RELEASE_PHASE.md` | Release phase marker and scope boundary |
 | `docs/PHASE6_CONTROL_PLANE_RELEASE_CLOSURE.md` | Phase 6 release closure note and validation record |
+| `docs/PHASE7_DEVELOPMENT_EXECUTION_ENABLEMENT.md` | Phase 7 development execution enablement record |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
 ## Write gate
 
-Write functions are structurally prepared but paused by default.
+Write functions are structurally prepared but paused by default for staging and production.
 
 Keep this repository variable unless a specific staging/production write operation is approved in a separate write-gate phase:
 
@@ -94,7 +108,7 @@ Keep this repository variable unless a specific staging/production write operati
 WRITE_TOOLS_ENABLED=false
 ```
 
-Production writes remain out of scope. Deployment writes remain out of scope. Future write gates require a separate approved phase.
+Production writes remain out of scope. Deployment writes remain out of scope. Future staging or production write gates require a separate approved phase.
 
 ## Key principle
 
