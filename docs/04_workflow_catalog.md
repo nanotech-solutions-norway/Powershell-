@@ -13,6 +13,7 @@
 | `manual-dispatch-standard-validation-sequence.yml` | Manual | `ubuntu-latest` | Dispatch and optionally monitor the standard validation sequence |
 | `manual-domeneshop-mcp-endpoint-validation.yml` | Manual | `ubuntu-latest` | Read-only Domeneshop MCP public endpoint validation |
 | `manual-domeneshop-mcp-https-readiness.yml` | Manual | `ubuntu-latest` | Read-only Domeneshop MCP HTTPS readiness diagnostic |
+| `manual-domeneshop-mcp-protected-status-validation.yml` | Manual | `ubuntu-latest` | Protected read-only Domeneshop MCP status validation |
 | `scheduled-atlas-health.yml` | Schedule/manual | `ubuntu-latest` | Scheduled health evidence |
 | `scheduled-project-control-report.yml` | Schedule/manual | `ubuntu-latest` | Scheduled project control report |
 
@@ -63,15 +64,23 @@ The Domeneshop MCP validation workflows are development-first and read-only.
 |---|---|---|
 | `manual-domeneshop-mcp-endpoint-validation.yml` | `development` | `domeneshop-mcp-endpoint-validation-report` |
 | `manual-domeneshop-mcp-https-readiness.yml` | `development` | `domeneshop-mcp-https-readiness-report` |
+| `manual-domeneshop-mcp-protected-status-validation.yml` | `development` | `domeneshop-mcp-protected-status-validation-report` |
 
 Default endpoint targets:
 
 ```text
 http://ds.atlas-ai.no/health.php
 https://ds.atlas-ai.no/health.php
+http://ds.atlas-ai.no/status.php
 ```
 
-These workflows do not perform provider API writes, DNS writes, file writes, SQL writes, bearer-token status validation, or deployment writes.
+These workflows do not perform provider API writes, DNS writes, file writes, SQL writes, or deployment writes.
+
+## Protected status validation pattern
+
+`manual-domeneshop-mcp-protected-status-validation.yml` uses a runtime-provided protected value and writes a sanitized artifact only.
+
+Allowed artifact fields are limited to status booleans/counts and validation posture fields. Request headers and credential values must not be written to artifacts.
 
 ## Standard validation dispatcher pattern
 
