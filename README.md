@@ -71,20 +71,21 @@ Scope:
 - no bearer-token workflow validation yet
 - HTTPS production readiness remains pending certificate correction
 
-## Phase 9 status endpoint validation design
+## Phase 9 status endpoint validation status
 
-Phase 9 opens a design-only path for validating the Domeneshop MCP status endpoint without placing credential material in repository content, workflow logs, artifacts, comments, or chat messages.
+Phase 9 operator-local status endpoint validation is passed.
 
 Documents:
 
 - `docs/PHASE9_STATUS_ENDPOINT_VALIDATION_DESIGN.md`
 - `docs/PHASE9_OPERATOR_STATUS_VALIDATION_RUNBOOK.md`
+- `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md`
 
 Scope:
 
-- design-first
-- operator-local validation first
-- sanitized evidence only
+- operator-local validation passed
+- sanitized evidence boundary only
+- no credential material stored in repository
 - no GitHub status workflow yet
 - no runtime credential changes
 - no staging or production authority
@@ -99,7 +100,7 @@ Scope:
 6. Run `Scheduled - Project Control Report` manually once after material changes.
 7. For Phase 7 development maintenance, run `Manual - Development Maintenance Task` first with `dry_run: true`, then with `dry_run: false` only for approved documentation targets.
 8. For Domeneshop MCP read-only validation, run `Manual - Domeneshop MCP Endpoint Validation` and `Manual - Domeneshop MCP HTTPS Readiness` before considering HTTPS, bearer-status, or write-gate progression.
-9. For Phase 9, run the operator-local status validation runbook and record only sanitized evidence.
+9. For Phase 9, use `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` as the closure record.
 10. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
@@ -142,6 +143,7 @@ Scope:
 | `docs/PHASE8_RELEASE_CLOSURE.md` | Phase 8 release closure record |
 | `docs/PHASE9_STATUS_ENDPOINT_VALIDATION_DESIGN.md` | Phase 9 status endpoint validation design |
 | `docs/PHASE9_OPERATOR_STATUS_VALIDATION_RUNBOOK.md` | Phase 9 operator-local status validation runbook |
+| `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` | Phase 9 status validation closure record |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
