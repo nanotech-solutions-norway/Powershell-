@@ -41,11 +41,9 @@ jobs:
         env:
           DOMENESHOP_MCP_STATUS_CREDENTIAL: ${{ secrets.DOMENESHOP_MCP_STATUS_CREDENTIAL }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:DOMENESHOP_MCP_STATUS_CREDENTIAL)) {
-            throw "Required protected status credential is not configured."
+          if (-not [string]::IsNullOrWhiteSpace($env:DOMENESHOP_MCP_STATUS_CREDENTIAL)) {
+            Write-Output "::add-mask::$env:DOMENESHOP_MCP_STATUS_CREDENTIAL"
           }
-
-          Write-Output "::add-mask::$env:DOMENESHOP_MCP_STATUS_CREDENTIAL"
 
           $params = @{
             BaseUrl = "${{ inputs.base_url }}"
