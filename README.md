@@ -90,6 +90,25 @@ Scope:
 - no runtime credential changes
 - no staging or production authority
 
+## Phase 10 protected status workflow design status
+
+Phase 10 is open as a design-only phase for a future protected GitHub status validation workflow.
+
+Documents:
+
+- `docs/PHASE10_PROTECTED_STATUS_VALIDATION_WORKFLOW_DESIGN.md`
+- `docs/PHASE10_IMPLEMENTATION_GATE_CHECKLIST.md`
+
+Scope:
+
+- design-only
+- no active status workflow added yet
+- development-first future workflow pattern
+- sanitized artifact field set defined
+- implementation gates defined
+- no runtime state changes
+- no staging or production authority
+
 ## Recommended operating order
 
 1. Keep all production/deployment workflows paused until a separate write-gate phase is explicitly approved.
@@ -101,7 +120,8 @@ Scope:
 7. For Phase 7 development maintenance, run `Manual - Development Maintenance Task` first with `dry_run: true`, then with `dry_run: false` only for approved documentation targets.
 8. For Domeneshop MCP read-only validation, run `Manual - Domeneshop MCP Endpoint Validation` and `Manual - Domeneshop MCP HTTPS Readiness` before considering HTTPS, bearer-status, or write-gate progression.
 9. For Phase 9, use `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` as the closure record.
-10. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
+10. For Phase 10, use the design document and implementation gate checklist before creating any active protected workflow.
+11. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
 
@@ -144,6 +164,8 @@ Scope:
 | `docs/PHASE9_STATUS_ENDPOINT_VALIDATION_DESIGN.md` | Phase 9 status endpoint validation design |
 | `docs/PHASE9_OPERATOR_STATUS_VALIDATION_RUNBOOK.md` | Phase 9 operator-local status validation runbook |
 | `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` | Phase 9 status validation closure record |
+| `docs/PHASE10_PROTECTED_STATUS_VALIDATION_WORKFLOW_DESIGN.md` | Phase 10 protected status workflow design |
+| `docs/PHASE10_IMPLEMENTATION_GATE_CHECKLIST.md` | Phase 10 implementation gate checklist |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
