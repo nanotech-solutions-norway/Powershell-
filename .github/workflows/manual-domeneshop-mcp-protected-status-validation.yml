@@ -1,0 +1,67 @@
+name: Manual - Domeneshop MCP Protected Status Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Domeneshop MCP public base URL"
+        required: true
+        default: "http://ds.atlas-ai.no"
+      fail_on_unhealthy:
+        description: "Fail workflow if protected status validation is degraded"
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+
+env:
+  WRITE_TOOLS_ENABLED: "false"
+  TARGET_ENVIRONMENT: development
+
+jobs:
+  domeneshop-mcp-protected-status-validation:
+    name: Domeneshop MCP protected status validation
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Run protected status validation
+        shell: pwsh
+        env:
+          DOMENESHOP_MCP_STATUS_CREDENTIAL: ${{ secrets.DOMENESHOP_MCP_STATUS_CREDENTIAL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DOMENESHOP_MCP_STATUS_CREDENTIAL)) {
+            throw "Required protected status credential is not configured."
+          }
+
+          Write-Output "::add-mask::$env:DOMENESHOP_MCP_STATUS_CREDENTIAL"
+
+          $params = @{
+            BaseUrl = "${{ inputs.base_url }}"
+            OutputDirectory = "domeneshop-mcp-protected-status-validation-report"
+          }
+
+          if ("${{ inputs.fail_on_unhealthy }}" -eq "true") {
+            $params.FailOnUnhealthy = $true
+          }
+
+          ./scripts/domeneshop/Test-DomeneshopMcpProtectedStatus.ps1 @params
+
+      - name: Upload protected status validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeneshop-mcp-protected-status-validation-report
+          path: domeneshop-mcp-protected-status-validation-report/*
+          if-no-files-found: warn
