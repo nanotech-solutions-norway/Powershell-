@@ -109,6 +109,26 @@ Scope:
 - no runtime state changes
 - no staging or production authority
 
+## Phase 11 protected status workflow implementation status
+
+Phase 11 adds a protected manual GitHub workflow for Domeneshop MCP status validation.
+
+Workflow:
+
+- `Manual - Domeneshop MCP Protected Status Validation`
+
+Document:
+
+- `docs/PHASE11_PROTECTED_STATUS_VALIDATION_IMPLEMENTATION.md`
+
+Scope:
+
+- development environment only
+- manual workflow only
+- sanitized artifact output only
+- no credential material stored in repository
+- no provider, DNS, hosting-file, SQL, staging, or production authority
+
 ## Recommended operating order
 
 1. Keep all production/deployment workflows paused until a separate write-gate phase is explicitly approved.
@@ -121,7 +141,8 @@ Scope:
 8. For Domeneshop MCP read-only validation, run `Manual - Domeneshop MCP Endpoint Validation` and `Manual - Domeneshop MCP HTTPS Readiness` before considering HTTPS, bearer-status, or write-gate progression.
 9. For Phase 9, use `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` as the closure record.
 10. For Phase 10, use the design document and implementation gate checklist before creating any active protected workflow.
-11. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
+11. For Phase 11, run `Manual - Domeneshop MCP Protected Status Validation` after the protected value is configured.
+12. If a workflow fails, inspect the attached GitHub Actions log ZIP before proposing or applying another patch.
 
 ## Workflows
 
@@ -138,6 +159,7 @@ Scope:
 | `Manual - Dispatch Standard Validation Sequence` | Manual dispatcher for the standard validation sequence |
 | `Manual - Domeneshop MCP Endpoint Validation` | Read-only public Domeneshop MCP endpoint payload validation |
 | `Manual - Domeneshop MCP HTTPS Readiness` | Read-only Domeneshop MCP HTTPS/TLS readiness diagnostic |
+| `Manual - Domeneshop MCP Protected Status Validation` | Protected read-only status endpoint validation with sanitized artifact output |
 
 ## Documents
 
@@ -166,6 +188,7 @@ Scope:
 | `docs/PHASE9_STATUS_VALIDATION_CLOSURE.md` | Phase 9 status validation closure record |
 | `docs/PHASE10_PROTECTED_STATUS_VALIDATION_WORKFLOW_DESIGN.md` | Phase 10 protected status workflow design |
 | `docs/PHASE10_IMPLEMENTATION_GATE_CHECKLIST.md` | Phase 10 implementation gate checklist |
+| `docs/PHASE11_PROTECTED_STATUS_VALIDATION_IMPLEMENTATION.md` | Phase 11 protected status validation implementation record |
 | `docs/CHATGPT_ORCHESTRATOR_COMMANDS.md` | ChatGPT orchestration commands |
 | `docs/CHATGPT_PROJECT_FOLDER_INSTRUCTIONS.md` | Project-folder setup instructions |
 
