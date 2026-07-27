@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload diagnostics evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: project-diagnostics-evidence-${{ inputs.project }}
           path: evidence/*.json

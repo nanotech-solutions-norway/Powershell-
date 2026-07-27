@@ -174,7 +174,7 @@ jobs:
 
       - name: Upload validation sequence dispatcher report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: standard-validation-sequence-dispatch-report
           path: validation-sequence-report/*

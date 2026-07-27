@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload raw evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: project-health-suite-raw-evidence
           path: evidence/*.json
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload evidence summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: project-health-suite-summary
           path: evidence-summary/*
