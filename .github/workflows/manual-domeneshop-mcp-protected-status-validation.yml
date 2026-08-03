@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload protected status validation report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: domeneshop-mcp-protected-status-validation-report
           path: domeneshop-mcp-protected-status-validation-report/*
